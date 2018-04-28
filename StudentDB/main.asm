@@ -138,6 +138,100 @@ Done:
 	exit
 main ENDP
 
+; --------------------------------------------------------------
+; Opens: the DB File, Validate the DB key, Decrypt the data, 
+;	Reads the file in "buffer" array.
+; Receives:	EDX = Contains the OFFSET to the File Name String
+;			AL  = Contains the DB KEY
+; Parameters: FileName, DBKEY
+; Returns: VOID
+; --------------------------------------------------------------
+openDatabase PROC USES EDX ECX EAX EBX  ; filename:ptr byte,DBKEY: byte
+	mov DBKEY, AL
+
+	; OPEN FILE
+	call OpenInputFile
+	mov fileHandle, EAX
+
+	; check for errors
+	cmp EAX, INVALID_HANDLE_VALUE
+	jne FILE_OK
+	jmp ERROR_FOUND
+	
+FILE_OK:
+	; read the file into buffer
+	mov EDX, OFFSET CopiedBuffer 
+	mov ECX, LENGTHOF CopiedBuffer
+	call ReadFromFile
+	jnc CHECK_BUFFER_SIZE  ; Checking Reading Errors
+	jmp ERROR_FOUND		   ; Error Found
+
+CHECK_BUFFER_SIZE:
+	cmp EAX, LENGTHOF CopiedBuffer  ; Check if buffer is large enough
+	jg ERROR_FOUND			  ; Buffer is too small for the file
+	jmp BUFFER_SIZE_OK		  
+
+BUFFER_SIZE_OK:
+	mov CopiedBuffer[EAX], 0    ; Adding Null Terminator
+
+	; validate DB KEY	
+	mov BL, DBKEY
+	cmp CopiedBuffer[0], BL     ; Comparing The First Byte with the Given Key
+	jne ERROR_FOUND		  ; Keys Don't Match
+
+;copy the copied buffer to the buffer without the dbkey
+
+mov ECX, EAX
+dec ECX	
+mov EDX, OFFSET buffer
+mov EDI, OFFSET CopiedBuffer
+inc EDI
+COPY_BUFFER:
+mov BL, [EDI]
+cmp BL, 0
+je done
+mov [EDX], BL
+inc EDI
+inc EDX
+loop COPY_BUFFER
+done:
+; Decrypt the buffer
+	mov ECX, EAX		  ; Moving File Size to ECX
+	;dec ECX				  ; Decrementing ECX to Avoid the DBKEY
+	mov EDX, OFFSET buffer
+	;inc EDX				  ; Incrementing EDX to Avoid the DBKEY
+	mov AL, DBKey
+
+	; TODO: Shift 1 to remove DB KEY
+
+DECRYPT:
+		xor [EDX], AL	  ; XORING Every BYTE with the DBKEY
+		mov BL, [EDX]
+		inc EDX
+	LOOP DECRYPT
+	mov EDX, OFFSET buffer
+	call writeString
+	call crlf
+	mov EAX, fileHandle
+	call CloseFile
+
+	; mov EDX, OFFSET buffer
+	; call writeString
+	; call CRLF
+	; TODO: Removing the First Byte from buffer
+	ret
+
+ERROR_FOUND:
+	mov EAX, fileHandle
+	call closeFile
+	; TODO: Reset the buffer array
+	mov EDX, OFFSET errorString 
+	call writeString
+
+	ret
+openDatabase ENDP
+
+
 ; DllMain is required for any DLL
 DllMain PROC hInstance:DWORD, fdwReason:DWORD, lpReserved:DWORD 
 
