@@ -292,6 +292,45 @@ END_OF_FILE:  ;Break the Loop
 	ret
 updateGrade ENDP
 
+;--------------------------------------------------------------
+;receives ID IN AL
+;PUTS '*' in the first byte in the record
+;returns VOID
+;--------------------------------------------------------------
+
+DeleteStudent PROC USES EAX EBX EDI ECX ESI
+;recieves ID in AL
+mov EBX,EAX
+call getLastIndex
+mov EDI, OFFSET buffer
+mov AL, RECORD_DELIMETER
+cld
+
+delete:
+	cmp [EDI], ESI
+	je ERROR
+	cmp [EDI],BL  ;compare buffer byte with id
+	je IDFOUND
+	mov ECX, lengthof buffer
+	repne SCASB
+	je delete
+
+;ERROR OCCURED
+ERROR:
+mov EDX,OFFSET errorString
+call writeString
+jmp DONE
+
+;MOVE IN ID *
+IDFOUND:
+	mov AL,'*'
+	mov [EDI], AL
+
+DONE:
+	ret
+DeleteStudent ENDP
+
+
 ; DllMain is required for any DLL
 DllMain PROC hInstance:DWORD, fdwReason:DWORD, lpReserved:DWORD 
 
