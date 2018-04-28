@@ -232,6 +232,66 @@ ERROR_FOUND:
 openDatabase ENDP
 
 
+;---------------------------------------------------------------
+; Finds: Student by ID, and Update th grade
+; Recieves: EBX = Student ID 
+;			EAX = New Grade
+; Parameters: ID,GRADE
+; Returns: VOID
+;---------------------------------------------------------------
+updateGrade PROC
+	mov ID, BL
+	mov GRADE, AL
+	
+	mov EDX, OFFSET buffer
+	mov ECX, BUFFER_SIZE
+	mov SI, 0
+	
+ID_LOOP:
+	; Check for the ID
+	cmp [EDX],BL
+	je ID_FOUND  ; ID IS FOUND
+	; CONTINUE
+	inc EDX
+	loop ID_LOOP
+
+	; ERROR ID IS NOT FOUND
+	mov EDX, OFFSET errorString 
+	call writeString
+	jmp END_OF_FILE
+
+ID_FOUND:
+	inc EDX  ; Skip ID Byte
+	; Skip Delimeter Byte
+	inc EDX
+	; mov delimeter 
+	mov AL,FIELD_DELIMETER
+	; Max Size of file
+	mov ECX, BUFFER_SIZE
+	; Skip NAME Bytes
+NAME_LOOP:
+	cmp [EDX], AL
+	je END_OF_NAME  ; DELIMETER is FOUND, End of NAME Bytes
+	inc EDX
+	loop NAME_LOOP
+
+	; ERROR FOUND
+	mov EDX, OFFSET errorString 
+	call writeString
+	jmp END_OF_FILE
+
+END_OF_NAME:
+	inc EDX
+	mov AL, GRADE
+	mov [EDX], AL
+	; MOV GRADE
+
+END_OF_FILE:  ;Break the Loop
+	mov ECX,1
+
+	ret
+updateGrade ENDP
+
 ; DllMain is required for any DLL
 DllMain PROC hInstance:DWORD, fdwReason:DWORD, lpReserved:DWORD 
 
