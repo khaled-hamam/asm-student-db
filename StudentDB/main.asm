@@ -330,6 +330,145 @@ DONE:
 	ret
 DeleteStudent ENDP
 
+; --------------------------------------------------------------
+; Function: Enroll a Student.
+; Input: Student ID, Student Name, Student Grade, Student section 
+; --------------------------------------------------------------
+enrollStudent PROC USES EDX ECX EBX ESI EAX EDI ;sId:byte, sName:byte, intGrade:byte, sectionNum:byte
+	; Validating Section Size
+	mov ESI, OFFSET buffer  
+	mov ECX, LENGTHOF buffer  ; Loop On BUFFER_SIZE
+	mov AL, RECORD_DELIMETER  ; Get NewLine Delimeter
+	; Count Number Of Students In Each Section
+GET_SECTION_STUDENT_NUMBER:
+		cmp [ESI], AL         ; Comparing Current OFFSET with the Record Del
+		je FOUND_DELIMETER    ; Jump If Delimeter Found
+		jmp CONTINUE		  
+		FOUND_DELIMETER:
+			mov BL, [ESI -1]  ; Copy the Byte Before Delimeter Which Contains Section ID
+			cmp BL, 1         ; Compare the Section ID with First Section 
+			jne SECTION_2     ; jump If Not First Section ID
+			inc section1	  ; INC section1 Counter
+			jmp CONTINUE      
+		SECTION_2:
+			inc section2      ; INC section2 Counter
+		CONTINUE:
+			inc ESI           ; INC Current OFFSET
+	loop GET_SECTION_STUDENT_NUMBER
+
+	mov AL, SECTIONID         ; Moving SECTIOND "INPUT"
+	mov BL, section1		  ; Moving counter Of section1 
+	cmp AL, 1				  ; Compare the SECTIONID with First Section
+	jne SEC_2				  ; jump IF SECTIONID Not First Section
+		cmp BL, 20			  ; Compare First Section with Max Students/Section
+		ja err                ; Jump error IF First Section Counter Greater Than Max Students/Section
+		jmp OK				  ; Continue Enroll Student
+SEC_2:
+	mov BL,section2           ; Moving counter Of section2
+	cmp BL,20				  ; Compare second Section with Max Students/Section
+	ja err					  ; Jump error IF Second Section Counter Greater Than Max Students/Section
+	OK:
+
+	; Getting Last Record Delimeter Index
+	mov ECX, LENGTHOF buffer
+	mov AL, RECORD_DELIMETER
+	call getLastIndex
+	mov AL, ID
+	mov [ESI], AL
+	inc ESI
+	mov AL, FIELD_DELIMETER
+	mov [ESI], AL
+	inc ESI
+	mov EBX, offset STUDENTNAME
+	mov EDI, 0
+	mov ECX, 21
+	l:
+		cmp [EBX], EDI
+		je end1
+			mov EAX, [EBX]
+			mov [ESI], EAX
+			inc ESI
+			inc EBX
+	loop l
+	end1:
+	
+	add ESI,-2
+	mov AL, FIELD_DELIMETER  ; Copy FIELD_DELIMETER 
+	mov [ESI], AL			 ; Add FIELD_DELIMETER To Buffer
+	inc ESI					 ; INC ESI To point To Byte After Delimeter
+	
+	mov AL, GRADE			 ; Copy GRADE
+	mov [ESI], AL			 ; Add GRADE To Buffer
+	inc ESI					 ; INC ESI To point To Byte After GRADE 
+	
+	mov AL, FIELD_DELIMETER  ; Copy FIELD_DELIMETER 
+	mov [ESI], AL			 ; Add FIELD_DELIMETER To Buffer
+	inc ESI					 ; INC ESI To point To Byte After Delimeter
+	
+	mov AL, SECTIONID		 ; Copy SECTIONID 
+	mov [ESI], AL			 ; Add SECTIONID To Buffer
+	inc ESI
+	
+	mov AL,RECORD_DELIMETER	
+	mov	[ESI],AL
+
+	jmp DONE
+	err:
+
+	DONE:
+	ret
+enrollStudent ENDP
+
+
+
+printStudents PROC
+	call getLastIndex
+	mov EDI, ESI
+	mov ESI, OFFSET buffer
+	mov ECX, LENGTHOF buffer
+
+BUFFER_LOOP:
+	movzx EAX, BYTE PTR [ESI]
+	call writeDec
+	add ESI, 2
+	mov Al,' '
+	call writeChar
+
+	mov BL, FIELD_DELIMETER
+	PRINT_NAME:
+		cmp [ESI], BL
+		je SECTION_GRADE
+		mov AL, [ESI]
+		call writeChar
+		inc ESI
+		loop PRINT_NAME
+
+	SECTION_GRADE:
+		inc ESI
+		mov AL,' '
+		call writeChar
+		movzx EAX, BYTE PTR [ESI]
+		call writeDec
+		add ESI, 2
+		mov AL,' '
+		call writeChar
+
+		movzx EAX, BYTE PTR [ESI]
+		call writeDec
+		add ESI, 2
+		mov AL,' '
+		call writeChar
+
+		mov AL,10
+		call writeChar
+		cmp ESI, EDI
+		je RETURN
+	loop BUFFER_LOOP
+
+RETURN:
+	ret
+printStudents ENDP
+
 
 ; DllMain is required for any DLL
 DllMain PROC hInstance:DWORD, fdwReason:DWORD, lpReserved:DWORD 
