@@ -120,7 +120,7 @@ Delete:
 	jmp DONE
 
 DisplayAll:
-	call readInt
+;	call readInt
 	call printStudents 
 	jmp Done
 
@@ -555,7 +555,7 @@ ENCRYPT_STRING:
 	mov AL, BL
 	mov [EDI], BL  ; Copying the DB KEY to the First Byte
 	inc EDI
-	call encryptBuffer
+	call encryptBuffer  ; Copying Valid Records and XORing each Byte with the Key
 
 	; Writing the DB Key String to the Database File
 	pop EAX		  ; Retrieving File Handle
@@ -601,7 +601,6 @@ COPY_LOOP:
 	mov BL, [ESI]
 	mov [EDI], BL
 	xor [EDI], AL
-	inc ESI
 	inc EDI
 	jmp CONTINUE
 
@@ -613,6 +612,7 @@ COPY_LOOP:
 	LOOP SKIP_RECORD
 
 	CONTINUE:
+	inc ESI
 	LOOP COPY_LOOP
 	
 	ret
