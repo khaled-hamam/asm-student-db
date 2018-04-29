@@ -16,7 +16,7 @@ EnterKey BYTE "ENTER DATA BASE KEY: ", 0
 CopiedBuffer BYTE BUFFER_SIZE DUP(?)
 buffer BYTE	BUFFER_SIZE DUP(?)
 encryptedBuffer BYTE 0, BUFFER_SIZE DUP(?)
-filename BYTE "F:\Downloads\Irvine\Project_Template\files\check.txt", 0
+filename BYTE "database.txt", 0
 DBKEY BYTE 65
 fileHandle HANDLE ?
 errorString BYTE "An Error Occured.", 0
@@ -548,6 +548,7 @@ saveDatabase PROC USES EAX EBX ECX EDX ESI EDI
 	ret					; Error Found
 
 ENCRYPT_STRING:
+	push EAX  ; Saving File Handle Value
 	mov ESI, OFFSET buffer
 	mov EDI, OFFSET encryptedBuffer
 	mov ECX, LENGTHOF buffer
