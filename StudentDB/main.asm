@@ -6,7 +6,7 @@ BUFFER_SIZE = 1024
 FIELD_DELIMETER = '/'
 RECORD_DELIMETER = '@'
 .data
-CHOICES BYTE "PRESS (1) TO OPEN DATABASE ", 10, 13, "PRESS (2) TO Enroll new Student ", 10, 13, "PRESS (3) TO Save DATABASE ", 10, 13, "PRESS (4) TO Update Student's Grade ", 10, 13, "PRESS (5) TO Delete a Student ", 10, 13, "PRESS (6) TO Print Student", 10, 13, "PRESS (7) TO PRINT SPECIFIC STUDENT", 10, 13 0
+CHOICES BYTE "PRESS (1) TO OPEN DATABASE ", 10, 13, "PRESS (2) TO Enroll new Student ", 10, 13, "PRESS (3) TO Save DATABASE ", 10, 13, "PRESS (4) TO Update Student's Grade ", 10, 13, "PRESS (5) TO Delete a Student ", 10, 13, "PRESS (6) TO Print Student", 10, 13, "PRESS (7) TO PRINT SPECIFIC STUDENT", 10, 13, 0
 RepeatChoice BYTE "DO you want to Enter another choice? 'y/n' ",10 ,13, 0
 EnterID BYTE "ENTER STUDENT'S ID: ", 0
 EnterName BYTE "ENTER STUDENT'S Name: ", 0
@@ -329,6 +329,293 @@ IDFOUND:
 DONE:
 	ret
 DeleteStudent ENDP
+
+; --------------------------------------------------------------
+; Function: Enroll a Student.
+; Input: Student ID, Student Name, Student Grade, Student section 
+; --------------------------------------------------------------
+enrollStudent PROC USES EDX ECX EBX ESI EAX EDI ;sId:byte, sName:byte, intGrade:byte, sectionNum:byte
+	; Validating Section Size
+	mov ESI, OFFSET buffer  
+	mov ECX, LENGTHOF buffer  ; Loop On BUFFER_SIZE
+	mov AL, RECORD_DELIMETER  ; Get NewLine Delimeter
+	; Count Number Of Students In Each Section
+GET_SECTION_STUDENT_NUMBER:
+		cmp [ESI], AL         ; Comparing Current OFFSET with the Record Del
+		je FOUND_DELIMETER    ; Jump If Delimeter Found
+		jmp CONTINUE		  
+		FOUND_DELIMETER:
+			mov BL, [ESI -1]  ; Copy the Byte Before Delimeter Which Contains Section ID
+			cmp BL, 1         ; Compare the Section ID with First Section 
+			jne SECTION_2     ; jump If Not First Section ID
+			inc section1	  ; INC section1 Counter
+			jmp CONTINUE      
+		SECTION_2:
+			inc section2      ; INC section2 Counter
+		CONTINUE:
+			inc ESI           ; INC Current OFFSET
+	loop GET_SECTION_STUDENT_NUMBER
+
+	mov AL, SECTIONID         ; Moving SECTIOND "INPUT"
+	mov BL, section1		  ; Moving counter Of section1 
+	cmp AL, 1				  ; Compare the SECTIONID with First Section
+	jne SEC_2				  ; jump IF SECTIONID Not First Section
+		cmp BL, 20			  ; Compare First Section with Max Students/Section
+		ja err                ; Jump error IF First Section Counter Greater Than Max Students/Section
+		jmp OK				  ; Continue Enroll Student
+SEC_2:
+	mov BL,section2           ; Moving counter Of section2
+	cmp BL,20				  ; Compare second Section with Max Students/Section
+	ja err					  ; Jump error IF Second Section Counter Greater Than Max Students/Section
+	OK:
+
+	; Getting Last Record Delimeter Index
+	mov ECX, LENGTHOF buffer
+	mov AL, RECORD_DELIMETER
+	call getLastIndex
+	mov AL, ID
+	mov [ESI], AL
+	inc ESI
+	mov AL, FIELD_DELIMETER
+	mov [ESI], AL
+	inc ESI
+	mov EBX, offset STUDENTNAME
+	mov EDI, 0
+	mov ECX, 21
+	l:
+		cmp [EBX], EDI
+		je end1
+			mov EAX, [EBX]
+			mov [ESI], EAX
+			inc ESI
+			inc EBX
+	loop l
+	end1:
+	
+	add ESI,-2
+	mov AL, FIELD_DELIMETER  ; Copy FIELD_DELIMETER 
+	mov [ESI], AL			 ; Add FIELD_DELIMETER To Buffer
+	inc ESI					 ; INC ESI To point To Byte After Delimeter
+	
+	mov AL, GRADE			 ; Copy GRADE
+	mov [ESI], AL			 ; Add GRADE To Buffer
+	inc ESI					 ; INC ESI To point To Byte After GRADE 
+	
+	mov AL, FIELD_DELIMETER  ; Copy FIELD_DELIMETER 
+	mov [ESI], AL			 ; Add FIELD_DELIMETER To Buffer
+	inc ESI					 ; INC ESI To point To Byte After Delimeter
+	
+	mov AL, SECTIONID		 ; Copy SECTIONID 
+	mov [ESI], AL			 ; Add SECTIONID To Buffer
+	inc ESI
+	
+	mov AL,RECORD_DELIMETER	
+	mov	[ESI],AL
+
+	jmp DONE
+	err:
+
+	DONE:
+	ret
+enrollStudent ENDP
+
+
+
+printStudents PROC
+	call getLastIndex
+	mov EDI, ESI
+	mov ESI, OFFSET buffer
+	mov ECX, LENGTHOF buffer
+
+BUFFER_LOOP:
+	movzx EAX, BYTE PTR [ESI]
+	call writeDec
+	add ESI, 2
+	mov Al,' '
+	call writeChar
+
+	mov BL, FIELD_DELIMETER
+	PRINT_NAME:
+		cmp [ESI], BL
+		je SECTION_GRADE
+		mov AL, [ESI]
+		call writeChar
+		inc ESI
+		loop PRINT_NAME
+
+	SECTION_GRADE:
+		inc ESI
+		mov AL,' '
+		call writeChar
+		movzx EAX, BYTE PTR [ESI]
+		call writeDec
+		add ESI, 2
+		mov AL,' '
+		call writeChar
+
+		movzx EAX, BYTE PTR [ESI]
+		call writeDec
+		add ESI, 2
+		mov AL,' '
+		call writeChar
+
+		mov AL,10
+		call writeChar
+		cmp ESI, EDI
+		je RETURN
+	loop BUFFER_LOOP
+
+RETURN:
+	ret
+printStudents ENDP
+
+; --------------------------------------------------------------
+; Function: GetAlphabeticalGrade.
+; Input: Grade as a Number 
+; Returns: Alphabetical Grade in AL
+; --------------------------------------------------------------
+GetAlphabeticalGrade PROC USES EAX ECX EDX
+	; Number should be In EAX 
+	mov ECX,100
+	cmp EAX,ECX
+	jnbe done
+		cmp EAX,90
+		jnae else1
+			mov AL,'A'
+			jmp done
+		else1:
+			cmp EAX,80
+			jnae else2
+				mov AL, 'B'
+				jmp done
+		else2:
+			cmp EAX,70
+			jnae else3
+				mov AL,'C'
+				jmp done
+		else3:
+			cmp EAX,60
+			jnae else4
+				mov AL,'D'
+				jmp done
+		else4:
+			mov AL,'F'
+			jmp done
+	done:
+	ret
+GetAlphabeticalGrade ENDP 
+
+; --------------------------------------------------------------
+; Gets: The last BYTE OFFSET in the Buffer
+; Recieves: VOID
+; Returns: The OFFSET in the ESI
+; --------------------------------------------------------------
+
+getLastIndex PROC USES EDX EAX ECX
+	mov ECX, LENGTHOF buffer
+	mov EDX, offset buffer
+	mov ESI, offset buffer
+	mov AL, RECORD_DELIMETER
+LAST_RECORD_CHECK:
+	cmp [EDX], AL  ; Comparing Current OFFSET with the Record Del.
+	jne CONT
+	mov ESI, EDX   ; IF Equal, Save the Current OFFSET to ESI
+	inc ESI		   ; INC ESI to point on the byte after the Record Del.
+	CONT:
+		inc EDX
+	loop LAST_RECORD_CHECK
+	
+	ret
+getLastIndex ENDP
+
+; --------------------------------------------------------------
+; Saves: the Database File
+; Recieves: EDX = OFFSET to the File Name String	
+;			AL  = Database Key
+; Returns: VOID
+; --------------------------------------------------------------
+saveDatabase PROC USES EAX EBX ECX EDX ESI EDI
+	; Creating the DB File
+	mov BL, AL  ; Saving the DB KEY Value in BL
+	call CreateOutputFile
+
+	; Checking for File Handle Errors
+	cmp EAX, INVALID_HANDLE_VALUE
+	jne ENCRYPT_STRING  ; No Error Found
+	mov EDX, OFFSET errorString
+	call writeString
+	call CRLF
+	ret					; Error Found
+
+ENCRYPT_STRING:
+	mov ESI, OFFSET buffer
+	mov EDI, OFFSET encryptedBuffer
+	mov ECX, LENGTHOF buffer
+	mov AL, BL
+	mov [EDI], BL  ; Copying the DB KEY to the First Byte
+	inc EDI
+	call encryptBuffer
+
+	; Writing the DB Key String to the Database File
+	pop EAX		  ; Retrieving File Handle
+	mov EDX, OFFSET encryptedBuffer
+	mov ECX, LENGTHOF encryptedBuffer
+	push EAX      ; Saving File Handle
+	call writeToFile
+	mov EBX, EAX  ; Saving EAX Value (Number of Bytes Written in File)
+	pop EAX		  ; Retrieving File Handle
+	call closeFile
+	mov EAX, EBX  ; Retrieving EAX Value (Number of Bytes Written in File)
+
+	; Checking Write Errors
+	cmp EAX, LENGTHOF encryptedBuffer
+	je DONE_SAVING  ; EAX == LENGTHOF buffer (NO ERROR)
+	; EAX != LENGTHOF buffer (ERROR)
+	mov EDX, OFFSET errorString
+	call writeString
+	call CRLF
+	ret
+DONE_SAVING:
+	mov EDX, OFFSET successString
+	call writeString
+	call CRLF
+	ret
+saveDatabase ENDP
+
+
+; --------------------------------------------------------------
+; Copies: the input Array to the Output Array
+; Recieves: ESI = OFFSET to the Input Array
+;			EDI = OFFSET to the Output Array
+;			ECX = Length of the Input Array
+;			AL  = DB KEY
+; Returns: VOID
+; --------------------------------------------------------------
+encryptBuffer PROC USES ESI EDI	ECX	EAX EBX
+
+COPY_LOOP:
+	mov BL, '*'
+	cmp [ESI], BL
+	je SKIP_RECORD
+	mov BL, [ESI]
+	mov [EDI], BL
+	xor [EDI], AL
+	inc ESI
+	inc EDI
+	jmp CONTINUE
+
+	SKIP_RECORD:
+		mov BL, RECORD_DELIMETER
+		cmp [ESI], BL
+		je CONTINUE
+		inc ESI
+	LOOP SKIP_RECORD
+
+	CONTINUE:
+	LOOP COPY_LOOP
+	
+	ret
+encryptBuffer ENDP
 
 
 
