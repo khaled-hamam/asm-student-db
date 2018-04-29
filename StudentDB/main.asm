@@ -330,68 +330,7 @@ DONE:
 	ret
 DeleteStudent ENDP
 
-;---------------------------------------------------------------------
-;Recieves student's id in al
-;display student's data
-;---------------------------------------------------------------------
-PrintStudent PROC
-mov EBX,EAX
-call getLastIndex
-mov EDI, OFFSET buffer
-mov AL, RECORD_DELIMETER
-cld
 
-ID_SEARCH:
-	cmp [EDI], ESI
-	je ERROR
-	cmp [EDI],BL  ;compare buffer byte with id
-	je IDFOUND
-	mov ECX, lengthof buffer
-	repne SCASB
-	je ID_SEARCH
-
-;ERROR OCCURED
-ERROR:
-mov EDX,OFFSET errorString
-call writeString
-ret
-
-IDFOUND:
-movzx EAX, byte ptr [EDI]
-call writeDec  ;display ID
-
-mov AL," "
-call writeChar
-
-inc EDI
-inc EDI
-mov BL, FIELD_DELIMETER
-mov ecx, BUFFER_SIZE
-DisplayName:
-cmp [EDI], BL
-je END_OF_NAME
-mov AL, [EDI]
-call writeChar
-inc EDI
-loop DisplayName
-END_OF_NAME:
-mov AL," "
-call writeChar
-
-inc EDI
-movzx EAX,byte ptr [EDI]
-call writeDec ;display grade
-
-mov AL," "
-call writeChar
-
-inc EDI
-inc EDI
-movzx EAX, byte ptr[EDI]
-call writeDec ;display sec id
-call crlf
-ret
-PrintStudent ENDP
 
 ; DllMain is required for any DLL
 DllMain PROC hInstance:DWORD, fdwReason:DWORD, lpReserved:DWORD 
