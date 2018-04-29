@@ -505,6 +505,28 @@ GetAlphabeticalGrade PROC USES EAX ECX EDX
 	ret
 GetAlphabeticalGrade ENDP 
 
+; --------------------------------------------------------------
+; Gets: The last BYTE OFFSET in the Buffer
+; Recieves: VOID
+; Returns: The OFFSET in the ESI
+; --------------------------------------------------------------
+
+getLastIndex PROC USES EDX EAX ECX
+	mov ECX, LENGTHOF buffer
+	mov EDX, offset buffer
+	mov ESI, offset buffer
+	mov AL, RECORD_DELIMETER
+LAST_RECORD_CHECK:
+	cmp [EDX], AL  ; Comparing Current OFFSET with the Record Del.
+	jne CONT
+	mov ESI, EDX   ; IF Equal, Save the Current OFFSET to ESI
+	inc ESI		   ; INC ESI to point on the byte after the Record Del.
+	CONT:
+		inc EDX
+	loop LAST_RECORD_CHECK
+	
+	ret
+getLastIndex ENDP
 
 ; DllMain is required for any DLL
 DllMain PROC hInstance:DWORD, fdwReason:DWORD, lpReserved:DWORD 
