@@ -6,7 +6,7 @@ BUFFER_SIZE = 1024
 FIELD_DELIMETER = '/'
 RECORD_DELIMETER = '@'
 .data
-CHOICES BYTE "PRESS (1) TO OPEN DATABASE ", 10, 13, "PRESS (2) TO Enroll new Student ", 10, 13, "PRESS (3) TO Save DATABASE ", 10, 13, "PRESS (4) TO Update Student's Grade ", 10, 13, "PRESS (5) TO Delete a Student ", 10, 13, "PRESS (6) TO Print Student", 10, 13, "PRESS (7) TO PRINT SPECIFIC STUDENT", 10, 13 0
+CHOICES BYTE "PRESS (1) TO OPEN DATABASE ", 10, 13, "PRESS (2) TO Enroll new Student ", 10, 13, "PRESS (3) TO Save DATABASE ", 10, 13, "PRESS (4) TO Update Student's Grade ", 10, 13, "PRESS (5) TO Delete a Student ", 10, 13, "PRESS (6) TO Print Student", 10, 13, "PRESS (7) TO PRINT SPECIFIC STUDENT", 10, 13, 0
 RepeatChoice BYTE "DO you want to Enter another choice? 'y/n' ",10 ,13, 0
 EnterID BYTE "ENTER STUDENT'S ID: ", 0
 EnterName BYTE "ENTER STUDENT'S Name: ", 0
@@ -353,15 +353,11 @@ saveDatabase PROC USES EAX EBX ECX EDX ESI EDI
 ENCRYPT_STRING:
 	mov ESI, OFFSET buffer
 	mov EDI, OFFSET encryptedBuffer
-	mov [EDI], BL
-	inc EDI
 	mov ECX, LENGTHOF buffer
-	call copyArray  ; Copying the buffer to encryptedBuffer for Encryption
-	push EAX	    ; Saving File Handle
-	mov AL, BL		; Retrieving the DB KEY Value
-	mov ESI, OFFSET encryptedBuffer
-	inc ESI
-	call encryptString
+	mov AL, BL
+	mov [EDI], BL  ; Copying the DB KEY to the First Byte
+	inc EDI
+	call encryptBuffer
 
 	; Writing the DB Key String to the Database File
 	pop EAX		  ; Retrieving File Handle
@@ -395,36 +391,34 @@ saveDatabase ENDP
 ; Recieves: ESI = OFFSET to the Input Array
 ;			EDI = OFFSET to the Output Array
 ;			ECX = Length of the Input Array
+;			AL  = DB KEY
 ; Returns: VOID
 ; --------------------------------------------------------------
-copyArray PROC USES ESI EDI	ECX	EAX
+encryptBuffer PROC USES ESI EDI	ECX	EAX EBX
+
 COPY_LOOP:
-	mov AL, [ESI]
-	mov [EDI], AL
+	mov BL, '*'
+	cmp [ESI], BL
+	je SKIP_RECORD
+	mov BL, [ESI]
+	mov [EDI], BL
+	xor [EDI], AL
 	inc ESI
 	inc EDI
+	jmp CONTINUE
+
+	SKIP_RECORD:
+		mov BL, RECORD_DELIMETER
+		cmp [ESI], BL
+		je CONTINUE
+		inc ESI
+	LOOP SKIP_RECORD
+
+	CONTINUE:
 	LOOP COPY_LOOP
 	
 	ret
-copyArray ENDP
-
-
-; --------------------------------------------------------------
-; Encrypt: the input Array by XORING each
-;	BYTE with the DB KEY
-; Recieves: ESI = OFFSET to the Input Array
-;			AL  = DB KEY
-;			ECX = LENGTH OF the Input Array
-; Returns: VOID
-; --------------------------------------------------------------
-encryptString PROC USES ESI EAX EBX
-ENCRYPT_LOOP:
-	XOR [ESI], AL
-	inc ESI
-	LOOP ENCRYPT_LOOP
-
-	ret
-encryptString ENDP
+encryptBuffer ENDP
 
 
 ; DllMain is required for any DLL
