@@ -331,6 +331,102 @@ DONE:
 DeleteStudent ENDP
 
 
+; --------------------------------------------------------------
+; Saves: the Database File
+; Recieves: EDX = OFFSET to the File Name String	
+;			AL  = Database Key
+; Returns: VOID
+; --------------------------------------------------------------
+saveDatabase PROC USES EAX EBX ECX EDX ESI EDI
+	; Creating the DB File
+	mov BL, AL  ; Saving the DB KEY Value in BL
+	call CreateOutputFile
+
+	; Checking for File Handle Errors
+	cmp EAX, INVALID_HANDLE_VALUE
+	jne ENCRYPT_STRING  ; No Error Found
+	mov EDX, OFFSET errorString
+	call writeString
+	call CRLF
+	ret					; Error Found
+
+ENCRYPT_STRING:
+	mov ESI, OFFSET buffer
+	mov EDI, OFFSET encryptedBuffer
+	mov [EDI], BL
+	inc EDI
+	mov ECX, LENGTHOF buffer
+	call copyArray  ; Copying the buffer to encryptedBuffer for Encryption
+	push EAX	    ; Saving File Handle
+	mov AL, BL		; Retrieving the DB KEY Value
+	mov ESI, OFFSET encryptedBuffer
+	inc ESI
+	call encryptString
+
+	; Writing the DB Key String to the Database File
+	pop EAX		  ; Retrieving File Handle
+	mov EDX, OFFSET encryptedBuffer
+	mov ECX, LENGTHOF encryptedBuffer
+	push EAX      ; Saving File Handle
+	call writeToFile
+	mov EBX, EAX  ; Saving EAX Value (Number of Bytes Written in File)
+	pop EAX		  ; Retrieving File Handle
+	call closeFile
+	mov EAX, EBX  ; Retrieving EAX Value (Number of Bytes Written in File)
+
+	; Checking Write Errors
+	cmp EAX, LENGTHOF encryptedBuffer
+	je DONE_SAVING  ; EAX == LENGTHOF buffer (NO ERROR)
+	; EAX != LENGTHOF buffer (ERROR)
+	mov EDX, OFFSET errorString
+	call writeString
+	call CRLF
+	ret
+DONE_SAVING:
+	mov EDX, OFFSET successString
+	call writeString
+	call CRLF
+	ret
+saveDatabase ENDP
+
+
+; --------------------------------------------------------------
+; Copies: the input Array to the Output Array
+; Recieves: ESI = OFFSET to the Input Array
+;			EDI = OFFSET to the Output Array
+;			ECX = Length of the Input Array
+; Returns: VOID
+; --------------------------------------------------------------
+copyArray PROC USES ESI EDI	ECX	EAX
+COPY_LOOP:
+	mov AL, [ESI]
+	mov [EDI], AL
+	inc ESI
+	inc EDI
+	LOOP COPY_LOOP
+	
+	ret
+copyArray ENDP
+
+
+; --------------------------------------------------------------
+; Encrypt: the input Array by XORING each
+;	BYTE with the DB KEY
+; Recieves: ESI = OFFSET to the Input Array
+;			AL  = DB KEY
+;			ECX = LENGTH OF the Input Array
+; Returns: VOID
+; --------------------------------------------------------------
+encryptString PROC USES ESI EAX EBX
+ENCRYPT_LOOP:
+	XOR [ESI], AL
+	inc ESI
+	LOOP ENCRYPT_LOOP
+
+	ret
+encryptString ENDP
+
+
 ; DllMain is required for any DLL
 DllMain PROC hInstance:DWORD, fdwReason:DWORD, lpReserved:DWORD 
 
