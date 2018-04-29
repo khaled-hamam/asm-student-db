@@ -469,6 +469,42 @@ RETURN:
 	ret
 printStudents ENDP
 
+; --------------------------------------------------------------
+; Function: GetAlphabeticalGrade.
+; Input: Grade as a Number 
+; Returns: Alphabetical Grade in AL
+; --------------------------------------------------------------
+GetAlphabeticalGrade PROC USES EAX ECX EDX
+	; Number should be In EAX 
+	mov ECX,100
+	cmp EAX,ECX
+	jnbe done
+		cmp EAX,90
+		jnae else1
+			mov AL,'A'
+			jmp done
+		else1:
+			cmp EAX,80
+			jnae else2
+				mov AL, 'B'
+				jmp done
+		else2:
+			cmp EAX,70
+			jnae else3
+				mov AL,'C'
+				jmp done
+		else3:
+			cmp EAX,60
+			jnae else4
+				mov AL,'D'
+				jmp done
+		else4:
+			mov AL,'F'
+			jmp done
+	done:
+	ret
+GetAlphabeticalGrade ENDP 
+
 
 ; DllMain is required for any DLL
 DllMain PROC hInstance:DWORD, fdwReason:DWORD, lpReserved:DWORD 
