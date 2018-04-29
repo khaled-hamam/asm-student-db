@@ -617,8 +617,34 @@ COPY_LOOP:
 	
 	ret
 encryptBuffer ENDP
+; --------------------------------------------------------------
+; Sort:	Sort section IDs
+; Recieves: ESI = OFFSET to the IDs Array
+; Returns: VOID
+; --------------------------------------------------------------
+sortIDs PROC USES EAX ECX ESI EDI
+	mov ECX,39		;add maximum counter to ecx
+	outerLoop:
+		mov edi, ecx	; Save outer loop ecx
+		mov AL,[ESI]	; check if ID = zero -> end of current array
+		cmp AL, 0
+		je terminate
+		innerLoop:
+			mov AL,[ESI]
+			cmp [ESI+1], AL		; check if next element is smaller to exchange
+			jg noExchange		
+			xchg AL, [ESI+1]	; exchange and add to array
+			mov [ESI], AL
+			noExchange:
+				inc ESI
+		LOOP innerLoop
+		mov ECX, EDI
+	LOOP outerLoop
 
+	terminate:
 
+	ret 
+sortIDs ENDP
 ;---------------------------------------------------------------------
 ;Recieves student's id in al
 ;display student's data
