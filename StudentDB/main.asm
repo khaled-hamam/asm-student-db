@@ -27,7 +27,7 @@ section2 BYTE 0
 
 ID BYTE ?
 GRADE BYTE ?
-STUDENTNAME BYTE 20 DUP(?)
+STUDENTNAME BYTE 50 DUP(?)
 SECTIONID BYTE ?
 
 .code
@@ -391,7 +391,6 @@ SEC_2:
 			inc EBX
 	loop l
 	end1:
-	
 	add ESI,-2
 	mov AL, FIELD_DELIMETER  ; Copy FIELD_DELIMETER 
 	mov [ESI], AL			 ; Add FIELD_DELIMETER To Buffer
