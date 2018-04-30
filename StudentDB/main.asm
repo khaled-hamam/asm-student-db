@@ -595,26 +595,31 @@ saveDatabase ENDP
 encryptBuffer PROC USES ESI EDI	ECX	EAX EBX
 
 COPY_LOOP:
-	mov BL, '*'
+	mov BL, '*'  ; Checking for a Deleted Record
 	cmp [ESI], BL
-	je SKIP_RECORD
+	je SKIP_RECORD  ; If Deleted Skip to the Next Record Delimeter
+	; XORing the Byte with the DB Key
 	mov BL, [ESI]
 	mov [EDI], BL
 	xor [EDI], AL
-	inc EDI
+	inc EDI  ; Incrementing the encryptedBuffer OFFSET
 	jmp CONTINUE
 
 	SKIP_RECORD:
-		mov BL, RECORD_DELIMETER
+		; Checking for a Record Delimter
+		mov BL, RECORD_DELIMETER  
 		cmp [ESI], BL
-		je CONTINUE
+		je CONTINUE  ; New Record Found
 		inc ESI
 	LOOP SKIP_RECORD
 
 	CONTINUE:
 	inc ESI
+	cmp ECX, 0
+	je RETURN  ; Checking if ECX Reached the End during Record Skipping
 	LOOP COPY_LOOP
 	
+RETURN:
 	ret
 encryptBuffer ENDP
 
