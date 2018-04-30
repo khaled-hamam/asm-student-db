@@ -1,6 +1,5 @@
 include irvine32.inc
 
-
 ; CONSTANTS
 BUFFER_SIZE = 1024
 FIELD_DELIMETER = '/'
@@ -27,7 +26,7 @@ section2 BYTE 0
 
 ID BYTE ?
 GRADE BYTE ?
-STUDENTNAME BYTE 20 DUP(?)
+STUDENTNAME BYTE 100 DUP(?)
 SECTIONID BYTE ?
 
 .code
@@ -70,10 +69,13 @@ ENROLL:
 	call readInt
 	mov EDX, OFFSET ID
 	mov [EDX],al
+	mov EDX, offset STUDENTNAME
+	mov ECX, Lengthof STUDENTNAME
+	call clearArray
 	mov EDX,OFFSET EnterName
 	call writeString
 	mov edx,offset STUDENTNAME
-	mov ecx,20
+	mov ecx, Lengthof STUDENTNAME
 	call readstring
 	mov EDX,OFFSET EnterGrade
 	call writeString
@@ -379,20 +381,20 @@ SEC_2:
 	mov AL, FIELD_DELIMETER
 	mov [ESI], AL
 	inc ESI
-	mov EBX, offset STUDENTNAME
-	mov EDI, 0
-	mov ECX, 21
+	mov EDI, offset STUDENTNAME
+	mov BL, 0
+	mov ECX, Lengthof STUDENTNAME
 	l:
-		cmp [EBX], EDI
+		mov AL, [EDI]
+		cmp [EDI], BL
 		je end1
-			mov EAX, [EBX]
+			mov EAX, [EDI]
 			mov [ESI], EAX
 			inc ESI
-			inc EBX
+			inc EDI
 	loop l
 	end1:
-	
-	add ESI,-2
+	;add ESI,-2
 	mov AL, FIELD_DELIMETER  ; Copy FIELD_DELIMETER 
 	mov [ESI], AL			 ; Add FIELD_DELIMETER To Buffer
 	inc ESI					 ; INC ESI To point To Byte After Delimeter
@@ -418,8 +420,6 @@ SEC_2:
 	DONE:
 	ret
 enrollStudent ENDP
-
-
 
 printStudents PROC
 	call getLastIndex
@@ -707,6 +707,21 @@ call writeDec ;display sec id
 call crlf
 ret
 PrintStudent ENDP
+
+;-----------------------------------------------------------------------------------------
+;Clear the array
+;recieves array offset in EDX, lengthof array in ECX
+;return void
+;-----------------------------------------------------------------------------------------
+clearArray PROC USES EAX
+mov AL, 0
+clear:
+mov [EDX],AL
+inc EDX
+loop clear
+ret
+clearArray ENDP
+
 
 ; DllMain is required for any DLL
 DllMain PROC hInstance:DWORD, fdwReason:DWORD, lpReserved:DWORD 
