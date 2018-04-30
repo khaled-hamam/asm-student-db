@@ -263,5 +263,5 @@ __pycache__/
 # Remove .DS_Store
 .DS_Store
 
-# Removing Credentials Constants
-HospitalManagementSystem/Services/Credentials.cs
+# Removinng Database File
+database.txt

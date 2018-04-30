@@ -1,6 +1,5 @@
 include irvine32.inc
 
-
 ; CONSTANTS
 BUFFER_SIZE = 1024
 FIELD_DELIMETER = '/'
@@ -16,7 +15,7 @@ EnterKey BYTE "ENTER DATA BASE KEY: ", 0
 CopiedBuffer BYTE BUFFER_SIZE DUP(?)
 buffer BYTE	BUFFER_SIZE DUP(?)
 encryptedBuffer BYTE 0, BUFFER_SIZE DUP(?)
-filename BYTE "F:\Downloads\Irvine\Project_Template\files\check.txt", 0
+filename BYTE "database.txt", 0
 DBKEY BYTE 65
 fileHandle HANDLE ?
 errorString BYTE "An Error Occured.", 0
@@ -27,7 +26,7 @@ section2 BYTE 0
 
 ID BYTE ?
 GRADE BYTE ?
-STUDENTNAME BYTE 50 DUP(?)
+STUDENTNAME BYTE 100 DUP(?)
 SECTIONID BYTE ?
 
 .code
@@ -70,10 +69,13 @@ ENROLL:
 	call readInt
 	mov EDX, OFFSET ID
 	mov [EDX],al
+	mov EDX, offset STUDENTNAME
+	mov ECX, Lengthof STUDENTNAME
+	call clearArray
 	mov EDX,OFFSET EnterName
 	call writeString
 	mov edx,offset STUDENTNAME
-	mov ecx,20
+	mov ecx, Lengthof STUDENTNAME
 	call readstring
 	mov EDX,OFFSET EnterGrade
 	call writeString
@@ -120,7 +122,7 @@ Delete:
 	jmp DONE
 
 DisplayAll:
-	call readInt
+;	call readInt
 	call printStudents 
 	jmp Done
 
@@ -379,19 +381,20 @@ SEC_2:
 	mov AL, FIELD_DELIMETER
 	mov [ESI], AL
 	inc ESI
-	mov EBX, offset STUDENTNAME
-	mov EDI, 0
-	mov ECX, 21
+	mov EDI, offset STUDENTNAME
+	mov BL, 0
+	mov ECX, Lengthof STUDENTNAME
 	l:
-		cmp [EBX], EDI
+		mov AL, [EDI]
+		cmp [EDI], BL
 		je end1
-			mov EAX, [EBX]
+			mov EAX, [EDI]
 			mov [ESI], EAX
 			inc ESI
-			inc EBX
+			inc EDI
 	loop l
 	end1:
-	add ESI,-2
+	;add ESI,-2
 	mov AL, FIELD_DELIMETER  ; Copy FIELD_DELIMETER 
 	mov [ESI], AL			 ; Add FIELD_DELIMETER To Buffer
 	inc ESI					 ; INC ESI To point To Byte After Delimeter
@@ -417,8 +420,6 @@ SEC_2:
 	DONE:
 	ret
 enrollStudent ENDP
-
-
 
 printStudents PROC
 	call getLastIndex
@@ -547,13 +548,14 @@ saveDatabase PROC USES EAX EBX ECX EDX ESI EDI
 	ret					; Error Found
 
 ENCRYPT_STRING:
+	push EAX  ; Saving File Handle Value
 	mov ESI, OFFSET buffer
 	mov EDI, OFFSET encryptedBuffer
 	mov ECX, LENGTHOF buffer
 	mov AL, BL
 	mov [EDI], BL  ; Copying the DB KEY to the First Byte
 	inc EDI
-	call encryptBuffer
+	call encryptBuffer  ; Copying Valid Records and XORing each Byte with the Key
 
 	; Writing the DB Key String to the Database File
 	pop EAX		  ; Retrieving File Handle
@@ -599,7 +601,6 @@ COPY_LOOP:
 	mov BL, [ESI]
 	mov [EDI], BL
 	xor [EDI], AL
-	inc ESI
 	inc EDI
 	jmp CONTINUE
 
@@ -611,12 +612,39 @@ COPY_LOOP:
 	LOOP SKIP_RECORD
 
 	CONTINUE:
+	inc ESI
 	LOOP COPY_LOOP
 	
 	ret
 encryptBuffer ENDP
+; --------------------------------------------------------------
+; Sort:	Sort section IDs
+; Recieves: ESI = OFFSET to the IDs Array
+; Returns: VOID
+; --------------------------------------------------------------
+sortIDs PROC USES EAX ECX ESI EDI
+	mov ECX,39		;add maximum counter to ecx
+	outerLoop:
+		mov edi, ecx	; Save outer loop ecx
+		mov AL,[ESI]	; check if ID = zero -> end of current array
+		cmp AL, 0
+		je terminate
+		innerLoop:
+			mov AL,[ESI]
+			cmp [ESI+1], AL		; check if next element is smaller to exchange
+			jg noExchange		
+			xchg AL, [ESI+1]	; exchange and add to array
+			mov [ESI], AL
+			noExchange:
+				inc ESI
+		LOOP innerLoop
+		mov ECX, EDI
+	LOOP outerLoop
 
+	terminate:
 
+	ret 
+sortIDs ENDP
 ;---------------------------------------------------------------------
 ;Recieves student's id in al
 ;display student's data
@@ -679,6 +707,21 @@ call writeDec ;display sec id
 call crlf
 ret
 PrintStudent ENDP
+
+;-----------------------------------------------------------------------------------------
+;Clear the array
+;recieves array offset in EDX, lengthof array in ECX
+;return void
+;-----------------------------------------------------------------------------------------
+clearArray PROC USES EAX
+mov AL, 0
+clear:
+mov [EDX],AL
+inc EDX
+loop clear
+ret
+clearArray ENDP
+
 
 ; DllMain is required for any DLL
 DllMain PROC hInstance:DWORD, fdwReason:DWORD, lpReserved:DWORD 
