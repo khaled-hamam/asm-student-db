@@ -35,7 +35,7 @@ SECTIONID BYTE ?
 .code
 
 main PROC
-  RepeatChoices:
+RepeatChoices:
 	mov EDX,OFFSET CHOICES
 	call writeString
 	;READ CHOICE
@@ -940,19 +940,51 @@ loop clear
 ret
 clearArray ENDP
 
-;-----------------------------------------------------------------------------------------
-;Clear the array
-;recieves array offset in EDX, lengthof array in ECX
-;return void
-;-----------------------------------------------------------------------------------------
-clearArray PROC USES EAX
-mov AL, 0
-clear:
-mov [EDX],AL
-inc EDX
-loop clear
-ret
-clearArray ENDP
+
+; --------------------------------------------------------------
+; Parse: the integer value to string Database File
+; Recieves: ESI = OFFSET to the empty number string	
+;			EAX  = Integer Value
+; Returns: VOID
+; --------------------------------------------------------------
+parseNumberString PROC USES ESI EAX
+	mov ECX, 0
+	push ESI  ; Saving the OFFSET Value
+	PARSING_LOOP:
+		mov EDX, 0
+		mov EBX, 10
+		div EBX                  ; Dividing by 10 to get the Last Digit
+		add ECX, 1               ; Counting Digits
+		mov EBX, EDX
+		mov [ESI], BL            ; Moving the Remainder to [ESI]
+		mov BL, '0'
+		add [ESI], BL			 ; Adding 0 ASCII Value to the Digit
+		mov BL, [ESI]
+		inc ESI 
+		cmp EAX, 0				 ; Checking the End of Value
+	jne PARSING_LOOP
+
+	pop ESI   ; Retrieving the OFFSET Value
+	mov EDI, ESI
+	mov EBX, ECX  ; Saving the ECX Value 
+	; Reversing the String
+	mov EAX, 0
+	PUSH_STACK:
+		mov AL, [ESI]
+		push EAX
+		inc ESI
+	LOOP PUSH_STACK
+	
+	mov ECX, EBX  ; Retrieving the Value of ECX
+	mov ESI, EDI  ; Retrieving the Value of ESI
+	POP_STACK:
+		pop EAX
+		mov [ESI], AL
+		inc ESI
+	LOOP POP_STACK
+
+	ret
+parseNumberString ENDP
 
 
 ; DllMain is required for any DLL
