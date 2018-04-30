@@ -5,6 +5,8 @@ BUFFER_SIZE = 1024
 FIELD_DELIMETER = '/'
 RECORD_DELIMETER = '@'
 .data
+IDs BYTE 21 DUP(?), 0
+SectionStudents BYTE BUFFER_SIZE DUP(?) , 0
 CHOICES BYTE "PRESS (1) TO OPEN DATABASE ", 10, 13, "PRESS (2) TO Enroll new Student ", 10, 13, "PRESS (3) TO Save DATABASE ", 10, 13, "PRESS (4) TO Update Student's Grade ", 10, 13, "PRESS (5) TO Delete a Student ", 10, 13, "PRESS (6) TO Print Student", 10, 13, "PRESS (7) TO PRINT SPECIFIC STUDENT", 10, 13, 0
 RepeatChoice BYTE "DO you want to Enter another choice? 'y/n' ",10 ,13, 0
 EnterID BYTE "ENTER STUDENT'S ID: ", 0
@@ -15,6 +17,7 @@ EnterKey BYTE "ENTER DATA BASE KEY: ", 0
 CopiedBuffer BYTE BUFFER_SIZE DUP(?)
 buffer BYTE	BUFFER_SIZE DUP(?)
 encryptedBuffer BYTE 0, BUFFER_SIZE DUP(?)
+SECTIONFILENAME BYTE "F:\Downloads\Irvine\Project_Template\files\check.txt", 0
 filename BYTE "database.txt", 0
 DBKEY BYTE 65
 fileHandle HANDLE ?
@@ -74,6 +77,11 @@ ENROLL:
 	call clearArray
 	mov EDX,OFFSET EnterName
 	call writeString
+
+	mov EDX, OFFSET STUDENTNAME	
+	mov ECX, lengthof STUDENTNAME ;clearing name 
+	call clearArray
+
 	mov edx,offset STUDENTNAME
 	mov ecx, Lengthof STUDENTNAME
 	call readstring
@@ -128,7 +136,7 @@ DisplayAll:
 
 DisplayStudent:
 	call readInt
-	call PrintStudent
+	call generateSectionReport
 	jmp Done
 
 Done:
@@ -474,7 +482,7 @@ printStudents ENDP
 ; Input: Grade as a Number 
 ; Returns: Alphabetical Grade in AL
 ; --------------------------------------------------------------
-GetAlphabeticalGrade PROC USES EAX ECX EDX
+GetAlphabeticalGrade PROC USES ECX EDX
 	; Number should be In EAX 
 	mov ECX,100
 	cmp EAX,ECX
@@ -502,6 +510,7 @@ GetAlphabeticalGrade PROC USES EAX ECX EDX
 			mov AL,'F'
 			jmp done
 	done:
+call writeChar
 	ret
 GetAlphabeticalGrade ENDP 
 
@@ -623,26 +632,32 @@ encryptBuffer ENDP
 ; Returns: VOID
 ; --------------------------------------------------------------
 sortIDs PROC USES EAX ECX ESI EDI
-	mov ECX,39		;add maximum counter to ecx
+	mov ECX, lengthof IDs
+	dec ECX 
 	outerLoop:
-		mov edi, ecx	; Save outer loop ecx
-		mov AL,[ESI]	; check if ID = zero -> end of current array
-		cmp AL, 0
+		push ecx
+		mov esi, offset IDs
+		mov al, [esi]
+		cmp al, 0
 		je terminate
 		innerLoop:
-			mov AL,[ESI]
-			cmp [ESI+1], AL		; check if next element is smaller to exchange
-			jg noExchange		
-			xchg AL, [ESI+1]	; exchange and add to array
-			mov [ESI], AL
+			mov al,[esi+1]
+			cmp al, 0
+			je noExchange
+			mov al, [esi]
+			cmp [esi+1], al
+			jg noExchange
+			xchg al,[esi+1]
+			mov [esi],al
 			noExchange:
-				inc ESI
+			inc esi
 		LOOP innerLoop
-		mov ECX, EDI
+		pop ecx
 	LOOP outerLoop
-
 	terminate:
 
+	mov esi , offset IDs
+	
 	ret 
 sortIDs ENDP
 ;---------------------------------------------------------------------
@@ -707,6 +722,218 @@ call writeDec ;display sec id
 call crlf
 ret
 PrintStudent ENDP
+;-----------------------------------------------------------
+;takes section number, get section's studetns's id, sort them,
+;get sorted id's students from "buffer"
+;create new file, put the buffer in it
+;recieves section number in eax
+;returns void
+;-----------------------------------------------------------
+generateSectionReport PROC USES EDX ECX EDI EBX ESI EAX
+mov EDX, OFFSET IDs
+mov ECX, lengthof IDs
+call clearArray
+mov EDX, OFFSET SectionStudents
+mov ECX, lengthof SectionStudents
+call clearArray
+call getLastIndex
+mov EDI, OFFSET buffer
+mov EDX, OFFSET IDs
+mov ECX, LENGTHOF IDs
+;section number in eax
+;esi contains last offset int buffer
+getSectionIDs:
+mov BL, [EDI]  ;store student's ID temp
+;skip until record delimeter
+push ECX
+push EBX
+mov ECX, lengthof buffer
+mov BL, RECORD_DELIMETER
+skipRecord:
+cmp [EDI],BL
+je END_OF_RECORD
+inc EDI
+loop skipRecord
+;jmp ERROR
+END_OF_RECORD:
+pop EBX
+pop ECX
+
+dec EDI
+cmp [EDI],AL
+jne continue
+;add id
+mov [EDX], BL
+inc EDX
+continue:
+inc EDI
+inc EDI
+cmp EDI,ESI  ; Check end of buffer
+je SORT
+loop getSectionIDs
+
+SORT:
+mov esi, offset IDs
+call sortIDs
+
+call crlf
+;get students from buffer with ids
+;create new file
+mov EDX, OFFSET IDs
+mov ECX, LENGTHOF IDs
+;TODO esi contains last offset in buffer
+
+mov ESI, OFFSET SectionStudents
+mov AL, RECORD_DELIMETER
+
+iterateIDs:
+mov BL, 0
+cmp [EDX], BL  ;check for end of ids
+je END_OF_IDs
+
+mov BL, [EDX]  ;store id 
+push ECX
+mov EDI, OFFSET buffer
+mov ECX, LENGTHOF buffer
+
+	studentSearch:
+	;TODO check end of buffer
+	cmp [EDI],BL  ;check if student's id == id
+	je STUDENT_FOUND
+	SKIP_RECORD:
+		cmp [EDI],AL
+		je CONTINUE_SEARCH  ;search end of record
+		inc EDI
+	loop SKIP_RECORD
+	CONTINUE_SEARCH:
+	inc EDI
+	loop studentSearch
+
+;TODO ERROR Student is not found
+STUDENT_FOUND:
+	mov ECX, lengthof buffer
+	copyStudent:
+		cmp [EDI], AL ;check for end of record
+		je END_OF_RECORDs
+		mov BL, [EDI] 
+		mov [ESI], BL ;copy the record 
+		inc ESI
+		inc EDI
+	loop copyStudent
+;TODO ERROR end of record is not reached
+END_OF_RECORDs:
+	dec ESI
+	dec ESI
+	dec ESI
+	push EAX
+	movzx EAX, byte ptr[ESI]
+	call GetAlphabeticalGrade
+	inc ESI
+	inc ESI
+	mov [ESI], AL
+	inc ESI
+	mov BL, [EDI] 
+	mov [ESI],BL ;copy record delimeter
+	inc ESI
+	pop EAX
+	pop ECX
+	inc EDX
+loop iterateIDs
+
+
+
+END_OF_IDs:
+
+ERROR:
+	mov EDX, OFFSET SECTIONFILENAME
+	call CreateOutputFile
+
+	; Checking for File Handle Errors
+	cmp EAX, INVALID_HANDLE_VALUE
+	jne copytofile  ; No Error Found
+	mov EDX, OFFSET errorString
+	call writeString
+	call CRLF
+	ret					; Error Found
+
+copytofile:
+	; Writing the DB Key String to the Database File
+	mov EDX, OFFSET SectionStudents
+	mov ECX, LENGTHOF SectionStudents
+	push EAX      ; Saving File Handle
+	call writeToFile
+	mov EBX, EAX  ; Saving EAX Value (Number of Bytes Written in File)
+	pop EAX		  ; Retrieving File Handle
+	call closeFile
+	mov EAX, EBX  ; Retrieving EAX Value (Number of Bytes Written in File)
+
+	; Checking Write Errors
+	cmp EAX, LENGTHOF SectionStudents
+	je DONE_SAVING  ; EAX == LENGTHOF buffer (NO ERROR)
+	; EAX != LENGTHOF buffer (ERROR)
+	mov EDX, OFFSET errorString
+	call writeString
+	call CRLF
+	ret
+DONE_SAVING:
+	mov EDX, OFFSET successString
+	call writeString
+	call CRLF
+done:
+mov EDX, OFFSET IDs
+mov ECX, lengthof IDs
+call clearArray
+
+;print record
+mov EDX, OFFSET SectionStudents
+call writeString
+mov ECX, 2
+display:
+movzx EAX, byte ptr[EDX]
+call writeInt
+inc EDX
+inc EDX
+push ECX
+mov ECX, lengthof SectionStudents
+mov BL, FIELD_DELIMETER
+displayName:
+cmp [EDX], BL
+je END_OF_NAME
+mov AL, [EDX]
+call writeChar
+inc EDX
+loop displayName
+END_OF_NAME:
+call crlf
+pop ECX
+inc EDX
+movzx eax, byte ptr[edx]
+call writeInt
+inc EDX
+inc EDX
+mov AL, [EDX]
+call writeChar
+call crlf
+loop display
+
+	
+ret
+generateSectionReport ENDP
+
+;TODO REPLACE PROC
+;-----------------------------------------------------------------------------------------
+;Clear the array
+;recieves array offset in EDX, lengthof array in ECX
+;return void
+;-----------------------------------------------------------------------------------------
+clearArray PROC USES EAX
+mov AL, 0
+clear:
+mov [EDX],AL
+inc EDX
+loop clear
+ret
+clearArray ENDP
 
 ;-----------------------------------------------------------------------------------------
 ;Clear the array
