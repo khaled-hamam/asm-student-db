@@ -27,7 +27,7 @@ DBKEY BYTE 65
 fileHandle HANDLE ?
 errorString BYTE "An Error Occured.", 0
 successString BYTE "Saving Completed.", 0
-
+Grades BYTE 21 DUP(?), 0
 section1 BYTE 0
 section2 BYTE 0
 
