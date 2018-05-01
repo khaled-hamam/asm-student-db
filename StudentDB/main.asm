@@ -316,7 +316,6 @@ END_OF_FILE:  ;Break the Loop
 
 	ret
 updateGrade ENDP
-
 ;--------------------------------------------------------------
 ;receives ID IN AL
 ;PUTS '*' in the first byte in the record
@@ -328,17 +327,24 @@ DeleteStudent PROC USES EAX EBX EDI ECX ESI
 mov EBX,EAX
 call getLastIndex
 mov EDI, OFFSET buffer
-mov AL, RECORD_DELIMETER
-cld
+mov AL, FIELD_DELIMETER
 
 delete:
-	cmp [EDI], ESI
+	cmp EDI, ESI	;check end of buffer
 	je ERROR
 	cmp [EDI],BL  ;compare buffer byte with id
 	je IDFOUND
-	mov ECX, lengthof buffer
-	repne SCASB
-	je delete
+	;skip to next record
+	inc EDI		;skip ID	
+	inc EDI		;skip Delimeter
+	skipName:
+		cmp [EDI], AL ;check end of name
+		je CONTINUE
+		inc EDI
+	jmp skipName
+	CONTINUE:++
+		add EDI, 6
+	jmp delete
 
 ;ERROR OCCURED
 ERROR:
@@ -681,24 +687,32 @@ sortIDs PROC USES EAX ECX ESI EDI
 	ret 
 sortIDs ENDP
 ;---------------------------------------------------------------------
-;Recieves student's id in al
 ;display student's data
+;Recieves student's id in AL
+;RETURN VOID
 ;---------------------------------------------------------------------
 PrintStudent PROC
 mov EBX,EAX
 call getLastIndex
 mov EDI, OFFSET buffer
-mov AL, RECORD_DELIMETER
-cld
+mov AL, FIELD_DELIMETER
 
 ID_SEARCH:
-	cmp [EDI], ESI
+	cmp EDI, ESI		;check end of buffer
 	je ERROR
 	cmp [EDI],BL  ;compare buffer byte with id
 	je IDFOUND
-	mov ECX, lengthof buffer
-	repne SCASB
-	je ID_SEARCH
+
+	add EDI,2
+	skipName:
+		cmp [EDI], AL	;check end of name
+		je CONTINUE
+		inc EDI
+	jmp skipName
+
+	CONTINUE:	
+		add EDI, 5
+jmp ID_SEARCH
 
 ;ERROR OCCURED
 ERROR:
@@ -707,40 +721,40 @@ call writeString
 ret
 
 IDFOUND:
-movzx EAX, byte ptr [EDI]
-call writeDec  ;display ID
+	movzx EAX, byte ptr [EDI]
+	call writeDec  ;display ID
 
-mov AL," "
-call writeChar
+	mov AL," "
+	call writeChar
 
-inc EDI
-inc EDI
-mov BL, FIELD_DELIMETER
-mov ecx, BUFFER_SIZE
-DisplayName:
-cmp [EDI], BL
-je END_OF_NAME
-mov AL, [EDI]
-call writeChar
-inc EDI
-loop DisplayName
-END_OF_NAME:
-mov AL," "
-call writeChar
+	inc EDI
+	inc EDI
+	mov BL, FIELD_DELIMETER
+	mov ecx, BUFFER_SIZE
+	DisplayName:
+		cmp [EDI], BL
+		je END_OF_NAME
+		mov AL, [EDI]
+		call writeChar
+		inc EDI
+	loop DisplayName
+	END_OF_NAME:
+		mov AL," "
+		call writeChar
 
-inc EDI
-movzx EAX,byte ptr [EDI]
-call writeDec ;display grade
+		inc EDI
+		movzx EAX,byte ptr [EDI]
+		call writeDec ;display grade
 
-mov AL," "
-call writeChar
+		mov AL," "
+		call writeChar
 
-inc EDI
-inc EDI
-movzx EAX, byte ptr[EDI]
-call writeDec ;display sec id
-call crlf
-ret
+	inc EDI
+	inc EDI
+	movzx EAX, byte ptr[EDI]
+	call writeDec ;display sec id
+	call crlf
+	ret
 PrintStudent ENDP
 ;-----------------------------------------------------------
 ;takes section number, get section's studetns's id, sort them,
@@ -764,42 +778,40 @@ call clearArray
 call getLastIndex
 mov EDI, OFFSET buffer
 mov EDX, OFFSET IDs
-mov ECX, LENGTHOF IDs
 
 ;get all section IDs
 getSectionIDs:
 	mov BL, [EDI]  ;store student's ID temp
 
 	;skip until record delimeter
-	push ECX  ;store outer loop counter
-	push EBX  ;store student's id
-	mov ECX, lengthof buffer
-	mov BL, RECORD_DELIMETER
-
+	;push ECX
+	push EBX
+	;mov ECX, lengthof buffer
+	mov BL, FIELD_DELIMETER
 	skipRecord:
-		cmp [EDI],BL
-		je END_OF_RECORD  ;reached record delimeter
-		inc EDI
-	loop skipRecord
+		add EDI,2  ;skip id
+		skipName:
+			cmp [EDI], BL  ;check end of name
+			je CNT
+			inc EDI
+		jmp skipName
+		CNT:
+		 add EDI, 3	;skip grade
 
-	;jmp ERROR
-	END_OF_RECORD:
+END_OF_RECORD:
 		pop EBX
-		pop ECX
 
-		dec EDI		; return to section id byte
-		cmp [EDI],AL 
+		cmp [EDI], AL 
 		jne continue	;student is not from the required section
 		;ADD Student ID in IDs array
 		mov [EDX], BL
 		inc EDX	
 		continue:
 			;skip 2 bytes to the begining of the next record
-			inc EDI	
-			inc EDI
+			add EDI, 3
 			cmp EDI,ESI  ; Check end of buffer
 			je SORT
-loop getSectionIDs
+jmp getSectionIDs
 
 SORT:
 	mov esi, offset IDs
@@ -825,31 +837,34 @@ getStudents:
 	mov ESI, OFFSET SectionStudents
 
 	iterateIDs:
-	mov AL, RECORD_DELIMETER
+	mov AL, FIELD_DELIMETER
 	mov BL, 0
 	cmp [EDX], BL  ;check ids termination
 	je END_OF_IDs
 
 	mov BL, [EDX]  ;store ID 
-	push ECX		;store outer loop counter
+	;push ECX		;store outer loop counter
 	
 	;iterate over "buffer" until reach ID record
 	mov EDI, OFFSET buffer
-	mov ECX, LENGTHOF buffer
 
 		studentSearch:
 		;TODO check end of buffer
-		cmp [EDI],BL  ;check if student's id == id
+		cmp [EDI], BL  ;check if student's id == id
 		je STUDENT_FOUND
 
 		SKIP_RECORD:
-			cmp [EDI],AL		;Skip until record Delimeter
-			je CONTINUE_SEARCH  ;reach end of record
-			inc EDI
-		loop SKIP_RECORD
+			add EDI, 2  ;SKIP ID
+			skip:
+				cmp [EDI], AL  ;CHECK END OF NAME
+				je END_OF_NAME
+				inc EDI
+			jmp skip
+	END_OF_NAME:
+		add EDI, 6
 
 		CONTINUE_SEARCH:
-			inc EDI		;skip record Delimter
+			;inc EDI		;skip record Delimter
 		loop studentSearch
 
 	STUDENT_FOUND:
@@ -879,14 +894,14 @@ getStudents:
 		mov ECX, lengthof buffer	
 		copyName:
 			cmp AL, [EDI] ;check end of name
-			je END_OF_NAME
+			je COPY
 			mov BL, [EDI]
 			mov [ESI], BL
 			inc ESI
 			inc EDI
 		loop copyName
 
-	END_OF_NAME:
+	COPY:
 		;ADD Delimeter
 		mov AL, ' '
 		mov [ESI], AL	
