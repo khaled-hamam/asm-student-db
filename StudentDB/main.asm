@@ -7,17 +7,21 @@ RECORD_DELIMETER = '@'
 .data
 IDs BYTE 21 DUP(?), 0
 SectionStudents BYTE BUFFER_SIZE DUP(?) , 0
-CHOICES BYTE "PRESS (1) TO OPEN DATABASE ", 10, 13, "PRESS (2) TO Enroll new Student ", 10, 13, "PRESS (3) TO Save DATABASE ", 10, 13, "PRESS (4) TO Update Student's Grade ", 10, 13, "PRESS (5) TO Delete a Student ", 10, 13, "PRESS (6) TO Print Student", 10, 13, "PRESS (7) TO PRINT SPECIFIC STUDENT", 10, 13, 0
-RepeatChoice BYTE "DO you want to Enter another choice? 'y/n' ",10 ,13, 0
+convertedNum BYTE 3 DUP(?), 0
+NO_STUDENTS_ERROR BYTE "THERE IS NO STUDENTS IN THIS SECTION", 0
+CHOICES BYTE "PRESS (1) TO OPEN DATABASE ", 10, 13, "PRESS (2) TO Enroll new Student ", 10, 13, "PRESS (3) TO Save DATABASE ", 10, 13, "PRESS (4) TO Update Student's Grade ", 10, 13, "PRESS (5) TO Delete a Student ", 10, 13, "PRESS (6) TO Print Student", 10, 13, "PRESS (7) TO PRINT SPECIFIC STUDENT", 10, 13, "Press (8) To Generate Section Report", 10, 13, 0
+RepeatChoice BYTE "Do you want to Enter another choice? 'y/n' ",10 ,13, 0
 EnterID BYTE "ENTER STUDENT'S ID: ", 0
 EnterName BYTE "ENTER STUDENT'S Name: ", 0
 EnterGrade BYTE "ENTER STUDENT'S Grade: ", 0
 EnterSec BYTE "ENTER STUDENT'S Section Number (1-2): ", 0
 EnterKey BYTE "ENTER DATA BASE KEY: ", 0
+EnterSecNum BYTE "ENTER SECTION NUMBER: ", 0
 CopiedBuffer BYTE BUFFER_SIZE DUP(?)
 buffer BYTE	BUFFER_SIZE DUP(?)
 encryptedBuffer BYTE 0, BUFFER_SIZE DUP(?)
-SECTIONFILENAME BYTE "F:\Downloads\Irvine\Project_Template\files\check.txt", 0
+SECTION1FILENAME BYTE "Section1.txt", 0
+SECTION2FILENAME BYTE "Section2.txt", 0
 filename BYTE "database.txt", 0
 DBKEY BYTE 65
 fileHandle HANDLE ?
@@ -26,6 +30,7 @@ successString BYTE "Saving Completed.", 0
 
 section1 BYTE 0
 section2 BYTE 0
+
 
 ID BYTE ?
 GRADE BYTE ?
@@ -327,7 +332,7 @@ delete:
 		je CONTINUE
 		inc EDI
 	jmp skipName
-	CONTINUE:++
+	CONTINUE:
 		add EDI, 6
 	jmp delete
 
