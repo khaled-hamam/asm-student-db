@@ -626,8 +626,8 @@ COPY_LOOP:
 		jmp SKIP_NAME
 	
 	CONTINUE_SKIP:
-		add ESI, 4
-		sub ECX, 4
+		add ESI, 5
+		sub ECX, 5
 
 	CONTINUE:
 	inc ESI
