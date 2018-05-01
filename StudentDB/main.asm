@@ -255,6 +255,7 @@ ERROR_FOUND:
 	; TODO: Reset the buffer array
 	mov EDX, OFFSET errorString 
 	call writeString
+	call crlf
 
 	ret
 openDatabase ENDP
@@ -267,28 +268,43 @@ openDatabase ENDP
 ; Parameters: ID,GRADE
 ; Returns: VOID
 ;---------------------------------------------------------------
-updateGrade PROC
+updateGrade PROC USES EBX EAX EDX ECX ESI
 	mov ID, BL
 	mov GRADE, AL
 	
 	mov EDX, OFFSET buffer
-	mov ECX, BUFFER_SIZE
-	mov SI, 0
-	
-ID_LOOP:
-	; Check for the ID
-	cmp [EDX],BL
-	je ID_FOUND  ; ID IS FOUND
-	; CONTINUE
-	inc EDX
-	loop ID_LOOP
+	call getLastIndex
+	push EAX
+	mov AL, FIELD_DELIMETER
 
+SEARCH_ID:
+	cmp EDX, ESI
+	je ERROR_FOUND
+	cmp [EDX], BL
+	je ID_FOUND	
+	add EDX, 2	;skip ID
+
+	skipName:
+		cmp [EDX], AL  ;CHECK end of name
+		je CONTINUE 
+		inc EDX
+	jmp skipName
+
+CONTINUE:
+	add EDX, 6
+
+jmp SEARCH_ID
+
+ERROR_FOUND:
 	; ERROR ID IS NOT FOUND
 	mov EDX, OFFSET errorString 
 	call writeString
+	call crlf
+	pop EAX
 	jmp END_OF_FILE
 
 ID_FOUND:
+	pop EAX
 	inc EDX  ; Skip ID Byte
 	; Skip Delimeter Byte
 	inc EDX
@@ -306,6 +322,7 @@ NAME_LOOP:
 	; ERROR FOUND
 	mov EDX, OFFSET errorString 
 	call writeString
+	call crlf
 	jmp END_OF_FILE
 
 END_OF_NAME:
@@ -315,8 +332,6 @@ END_OF_NAME:
 	; MOV GRADE
 
 END_OF_FILE:  ;Break the Loop
-	mov ECX,1
-
 	ret
 updateGrade ENDP
 ;--------------------------------------------------------------
@@ -353,6 +368,7 @@ delete:
 ERROR:
 mov EDX,OFFSET errorString
 call writeString
+call crlf
 jmp DONE
 
 ;MOVE IN ID *
@@ -744,6 +760,7 @@ jmp ID_SEARCH
 ERROR:
 mov EDX,OFFSET errorString
 call writeString
+call crlf
 ret
 
 IDFOUND:
