@@ -1,1 +1,9 @@
-EXPORTS		
+EXPORTS	
+openDatabase @1
+updateGrade @2
+deleteStudent @3
+enrollStudent @4
+saveDatabase @5
+printStudent @6
+generateSectionReport @7
+top5Students @8
