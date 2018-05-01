@@ -60,6 +60,8 @@ RepeatChoices:
 	je DisplayAll
 	cmp EAX,7
 	je DisplayStudent
+	cmp EAX, 8
+	je generateReport
 	jmp Done
 
 OPEN:
@@ -129,6 +131,8 @@ UPDATE:
 
 
 Delete:
+	mov EDX, OFFSET EnterID
+	call writeString
 	call readInt
 	call DeleteStudent
 	call printStudents 
@@ -140,6 +144,15 @@ DisplayAll:
 	jmp Done
 
 DisplayStudent:
+	mov EDX, OFFSET EnterID
+	call writeString
+	call readInt
+	call printStudent
+	jmp Done
+
+generateReport:
+	mov EDX, OFFSET EnterSecNum
+	call writeString
 	call readInt
 	call generateSectionReport
 	jmp Done
@@ -448,8 +461,8 @@ SEC_2:
 	err:
 
 	DONE:
-	;mov EDX, offset buffer 
-	;call writestring
+	mov EDX, offset buffer 
+	call writestring
 	ret
 enrollStudent ENDP
 
@@ -501,7 +514,6 @@ GetAlphabeticalGrade PROC USES ECX EDX
 			mov AL,'F'
 			jmp done
 	done:
-call writeChar
 	ret
 GetAlphabeticalGrade ENDP 
 
@@ -695,7 +707,7 @@ ID_SEARCH:
 	jmp skipName
 
 	CONTINUE:	
-		add EDI, 5
+		add EDI, 6
 jmp ID_SEARCH
 
 ;ERROR OCCURED
@@ -824,6 +836,7 @@ getStudents:
 
 	iterateIDs:
 	mov AL, FIELD_DELIMETER
+	mov BL, [EDX]
 	mov BL, 0
 	cmp [EDX], BL  ;check ids termination
 	je END_OF_IDs
@@ -858,11 +871,12 @@ getStudents:
 		movzx EAX, byte ptr[EDI]
 		inc EDI ;skip ID byte
 		inc EDI ;skip delmieter byte
+		push ECX
 		push ESI
 		mov ESI , OFFSET convertedNum
 		call parseNumberString	
 		pop ESI
-		mov EBX, ECX
+		;mov EBX, ECX
 		mov EBX, OFFSET convertedNum
 		;copy string ID into sectionStudents array
 		copyID:
@@ -870,6 +884,7 @@ getStudents:
 			mov [ESI], AL
 			inc ESI
 		loop copyID
+			POP ecx
 		;ADD delimeter
 		mov AL,' '
 		mov [ESI],AL
@@ -895,6 +910,7 @@ getStudents:
 		inc EDI
 
 		;copy numeric grade
+		push ECX
 		push ESI
 		;convert numeric grade into string
 		movzx EAX, byte ptr [EDI]	
@@ -933,6 +949,7 @@ getStudents:
 		dec ECX
 		mov EBX,0
 		cmp EBX, ECX	;check end of IDs array
+		add EDI,5
 	jne iterateIDs
 
 END_OF_IDs:
@@ -1001,7 +1018,7 @@ generateSectionReport ENDP
 ;recieves array offset in EDX, lengthof array in ECX
 ;return void
 ;-----------------------------------------------------------------------------------------
-clearArray PROC USES EAX
+clearArray PROC USES EAX EDX
 mov AL, 0
 clear:
 mov [EDX],AL
@@ -1015,9 +1032,9 @@ clearArray ENDP
 ; Parse: the integer value to string Database File
 ; Recieves: ESI = OFFSET to the empty number string	
 ;			EAX  = Integer Value
-; Returns: VOID
+; Returns: ECX = Length of the Number String
 ; --------------------------------------------------------------
-parseNumberString PROC USES ESI EAX
+parseNumberString PROC USES ESI EAX EBX EDI EDX
 	mov ECX, 0
 	push ESI  ; Saving the OFFSET Value
 	PARSING_LOOP:
@@ -1033,9 +1050,9 @@ parseNumberString PROC USES ESI EAX
 		inc ESI 
 		cmp EAX, 0				 ; Checking the End of Value
 	jne PARSING_LOOP
-
+ 
 	pop ESI   ; Retrieving the OFFSET Value
-	mov EDI, ESI
+	mov EDI, ESI  ; Saving the ESI OFFSET Value
 	mov EBX, ECX  ; Saving the ECX Value 
 	; Reversing the String
 	mov EAX, 0
@@ -1044,7 +1061,7 @@ parseNumberString PROC USES ESI EAX
 		push EAX
 		inc ESI
 	LOOP PUSH_STACK
-	
+ 
 	mov ECX, EBX  ; Retrieving the Value of ECX
 	mov ESI, EDI  ; Retrieving the Value of ESI
 	POP_STACK:
@@ -1052,7 +1069,8 @@ parseNumberString PROC USES ESI EAX
 		mov [ESI], AL
 		inc ESI
 	LOOP POP_STACK
-
+ 
+	mov ECX, EBX  ; Returning the Length of the String in ECX
 	ret
 parseNumberString ENDP
 
