@@ -1031,6 +1031,218 @@ parseNumberString PROC USES ESI EAX EBX EDI EDX
 	ret
 parseNumberString ENDP
 
+; --------------------------------------------------------------
+; sortGrades PROC
+;
+; Sorts: the students grades array
+; Recieves: ESI = OFFSET to the Grades Array
+; Returns: VOID
+; --------------------------------------------------------------
+sortGrades PROC USES EAX ECX EDI ESI
+	mov ECX, lengthof Grades
+	dec ECX 
+	outerLoop:
+		push ECX
+		mov ESI, offset Grades
+		mov AL, [ESI]
+		cmp AL, 0
+		je terminate
+		innerLoop:
+			mov AL,[ESI+1]
+			cmp AL, 0
+			je noExchange
+			mov AL, [ESI]
+			cmp AL, [ESI+1]
+			jg noExchange
+			xchg AL,[ESI+1]
+			mov [ESI],AL
+			noExchange:
+			inc ESI
+		LOOP innerLoop
+		pop ECX
+	LOOP outerLoop
+	terminate:
+
+	ret 
+sortGrades ENDP
+
+
+; --------------------------------------------------------------
+; top5Students PROC
+;
+; Sorts: the student grades descendingly, get sorted Students Records
+;        by the Grades from "buffer", Displays the Top 5 Students
+; Recieves: studentsData = OFFSET to the studentsData array to be Filled
+; Returns: studentsData = The Top 5 Students Data Records
+; --------------------------------------------------------------
+top5Students PROC USES EAX EBX ECX EDX ESI EDI studentsData: PTR BYTE
+	mov EDX, offset CopiedBuffer
+	mov ECX, lengthof CopiedBuffer
+	call clearArray
+
+	mov EDI, offset buffer
+	mov EDX, offset CopiedBuffer
+	mov ECX, lengthof CopiedBuffer
+	call getLastIndex
+
+	copyBuffer:
+		cmp ESI, EDI
+		je stop
+		mov AL, [EDI]
+		mov [EDX], AL	
+		inc EDX
+		inc EDI	
+	LOOP copyBuffer
+	stop:
+	
+	mov EDX, offset Grades
+	mov ECX, lengthof Grades
+	call clearArray
+	call getLastIndex
+
+	mov EDI, offset buffer
+	mov EDX, offset Grades
+	mov ECX, lengthof Grades
+
+	getGrades:
+		push ECX
+		mov BL, FIELD_DELIMETER
+		mov ECX, lengthof CopiedBuffer
+		reachGrade:
+			mov AL, 0
+			cmp [EDI], AL
+			je SORT
+			add EDI, 2
+			mov BL, FIELD_DELIMETER
+			skipName:
+				mov AL, [EDI]
+				cmp [EDI], BL
+				je CNT
+				inc EDI
+			jmp skipName
+			CNT:
+				mov BL, [EDI+1]
+				mov [EDX], BL
+				inc EDX
+				add EDI, 6
+		LOOP reachGrade
+		cmp EDI, ESI		;check if end of buffer
+		je SORT
+		pop ECX
+	loop getGrades
+
+	SORT:
+	pop ECX
+	mov ESI, offset Grades
+	mov BL, 0
+	cmp [ESI], BL
+	je NO_STUDENTS_FOUND
+	call sortGrades
+	jmp getStudents
+
+	NO_STUDENTS_FOUND:	  ;display error msg, break the PROC
+		mov EDX, OFFSET NO_STUDENTS_ERROR
+		call writeString 
+		call crlf
+		ret
+
+getStudents:	
+	;Display Students from Buffer with Grades
+	mov EDX, offset Grades
+
+	iterateGrades:
+
+		mov BL, 0
+		cmp [EDX], BL  ;check for end of Grades
+		je END_OF_Grades
+
+		mov ECX, lengthof CopiedBuffer
+		mov EDI, offset CopiedBuffer
+
+		mov BL, [EDX]	; store student's grade
+			iterateAllRecords:
+				mov AL, [EDI]
+				push EAX
+				mov AL, Field_Delimeter
+
+				SKIP_RECORD:
+					add EDI, 2 ;Skip ID
+					skip:
+						cmp [EDI], AL
+						je END_OF_NAME
+						inc EDI
+					jmp skip	
+			END_OF_NAME:
+				pop EAX
+				cmp [EDI+1], BL
+				je StudentFound
+				add EDI, 6
+			loop iterateAllRecords
+			
+			StudentFound:		
+			;Print Student's Data
+				mov EBX,EAX
+				mov EDI, OFFSET buffer
+				mov AL, FIELD_DELIMETER
+
+				ID_SEARCH:
+					cmp [EDI],BL  ;compare buffer byte with id
+					je IDFOUND
+
+					add EDI,2
+					skipN:
+						cmp [EDI], AL	;check end of name
+						je CONTINUE
+						inc EDI
+					jmp skipN
+
+					CONTINUE:	
+						add EDI, 6
+				jmp ID_SEARCH
+
+				IDFOUND:
+					movzx EAX, byte ptr [EDI]
+					call writeDec  ;display ID
+
+					mov AL," "
+					call writeChar
+
+					inc EDI
+					inc EDI
+					mov BL, FIELD_DELIMETER
+					mov ecx, BUFFER_SIZE
+					DisplayName:
+						cmp [EDI], BL
+						je END_OFNAME
+						mov AL, [EDI]
+						call writeChar
+						inc EDI
+					loop DisplayName
+					END_OFNAME:
+						mov AL," "
+						call writeChar
+
+						inc EDI
+						movzx EAX,byte ptr [EDI]
+						call writeDec ;display grade
+
+						mov AL," "
+						call writeChar
+
+					inc EDI
+					inc EDI
+					movzx EAX, byte ptr[EDI]
+					call writeDec ;display sec id
+					call crlf						
+					
+					INC EDX
+	 jmp iterateGrades
+
+	END_OF_Grades:
+
+	ret
+top5Students ENDP
+
 
 ; DllMain is required for any DLL
 DllMain PROC hInstance:DWORD, fdwReason:DWORD, lpReserved:DWORD 
