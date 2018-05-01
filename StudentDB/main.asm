@@ -7,17 +7,21 @@ RECORD_DELIMETER = '@'
 .data
 IDs BYTE 21 DUP(?), 0
 SectionStudents BYTE BUFFER_SIZE DUP(?) , 0
-CHOICES BYTE "PRESS (1) TO OPEN DATABASE ", 10, 13, "PRESS (2) TO Enroll new Student ", 10, 13, "PRESS (3) TO Save DATABASE ", 10, 13, "PRESS (4) TO Update Student's Grade ", 10, 13, "PRESS (5) TO Delete a Student ", 10, 13, "PRESS (6) TO Print Student", 10, 13, "PRESS (7) TO PRINT SPECIFIC STUDENT", 10, 13, 0
-RepeatChoice BYTE "DO you want to Enter another choice? 'y/n' ",10 ,13, 0
+convertedNum BYTE 3 DUP(?), 0
+NO_STUDENTS_ERROR BYTE "THERE IS NO STUDENTS IN THIS SECTION", 0
+CHOICES BYTE "PRESS (1) TO OPEN DATABASE ", 10, 13, "PRESS (2) TO Enroll new Student ", 10, 13, "PRESS (3) TO Save DATABASE ", 10, 13, "PRESS (4) TO Update Student's Grade ", 10, 13, "PRESS (5) TO Delete a Student ", 10, 13, "PRESS (6) TO Print Student", 10, 13, "PRESS (7) TO PRINT SPECIFIC STUDENT", 10, 13, "Press (8) To Generate Section Report", 10, 13, 0
+RepeatChoice BYTE "Do you want to Enter another choice? 'y/n' ",10 ,13, 0
 EnterID BYTE "ENTER STUDENT'S ID: ", 0
 EnterName BYTE "ENTER STUDENT'S Name: ", 0
 EnterGrade BYTE "ENTER STUDENT'S Grade: ", 0
 EnterSec BYTE "ENTER STUDENT'S Section Number (1-2): ", 0
 EnterKey BYTE "ENTER DATA BASE KEY: ", 0
+EnterSecNum BYTE "ENTER SECTION NUMBER: ", 0
 CopiedBuffer BYTE BUFFER_SIZE DUP(?)
 buffer BYTE	BUFFER_SIZE DUP(?)
 encryptedBuffer BYTE 0, BUFFER_SIZE DUP(?)
-SECTIONFILENAME BYTE "F:\Downloads\Irvine\Project_Template\files\check.txt", 0
+SECTION1FILENAME BYTE "Section1.txt", 0
+SECTION2FILENAME BYTE "Section2.txt", 0
 filename BYTE "database.txt", 0
 DBKEY BYTE 65
 fileHandle HANDLE ?
@@ -26,6 +30,7 @@ successString BYTE "Saving Completed.", 0
 
 section1 BYTE 0
 section2 BYTE 0
+
 
 ID BYTE ?
 GRADE BYTE ?
@@ -65,7 +70,7 @@ OPEN:
 	mov EDX, OFFSET filename
 	call openDatabase
 	jmp Done
- 
+
 ENROLL:
 	mov EDX,OFFSET EnterID
 	call writeString
@@ -97,7 +102,7 @@ ENROLL:
 	mov [EDX],al
 	call enrollStudent
 
-	call printStudents 
+	; call printStudents 
 	jmp Done
 
 SAVE:
@@ -301,7 +306,6 @@ END_OF_FILE:  ;Break the Loop
 
 	ret
 updateGrade ENDP
-
 ;--------------------------------------------------------------
 ;receives ID IN AL
 ;PUTS '*' in the first byte in the record
@@ -313,17 +317,24 @@ DeleteStudent PROC USES EAX EBX EDI ECX ESI
 mov EBX,EAX
 call getLastIndex
 mov EDI, OFFSET buffer
-mov AL, RECORD_DELIMETER
-cld
+mov AL, FIELD_DELIMETER
 
 delete:
-	cmp [EDI], ESI
+	cmp EDI, ESI	;check end of buffer
 	je ERROR
 	cmp [EDI],BL  ;compare buffer byte with id
 	je IDFOUND
-	mov ECX, lengthof buffer
-	repne SCASB
-	je delete
+	;skip to next record
+	inc EDI		;skip ID	
+	inc EDI		;skip Delimeter
+	skipName:
+		cmp [EDI], AL ;check end of name
+		je CONTINUE
+		inc EDI
+	jmp skipName
+	CONTINUE:
+		add EDI, 6
+	jmp delete
 
 ;ERROR OCCURED
 ERROR:
@@ -345,27 +356,37 @@ DeleteStudent ENDP
 ; Input: Student ID, Student Name, Student Grade, Student section 
 ; --------------------------------------------------------------
 enrollStudent PROC USES EDX ECX EBX ESI EAX EDI ;sId:byte, sName:byte, intGrade:byte, sectionNum:byte
-	; Validating Section Size
-	mov ESI, OFFSET buffer  
-	mov ECX, LENGTHOF buffer  ; Loop On BUFFER_SIZE
-	mov AL, RECORD_DELIMETER  ; Get NewLine Delimeter
-	; Count Number Of Students In Each Section
-GET_SECTION_STUDENT_NUMBER:
-		cmp [ESI], AL         ; Comparing Current OFFSET with the Record Del
-		je FOUND_DELIMETER    ; Jump If Delimeter Found
-		jmp CONTINUE		  
-		FOUND_DELIMETER:
-			mov BL, [ESI -1]  ; Copy the Byte Before Delimeter Which Contains Section ID
-			cmp BL, 1         ; Compare the Section ID with First Section 
-			jne SECTION_2     ; jump If Not First Section ID
-			inc section1	  ; INC section1 Counter
-			jmp CONTINUE      
-		SECTION_2:
-			inc section2      ; INC section2 Counter
-		CONTINUE:
-			inc ESI           ; INC Current OFFSET
-	loop GET_SECTION_STUDENT_NUMBER
 
+	; Validating Section Size
+	mov ECX, LENGTHOF buffer
+	mov EDI, offset buffer
+	call getLastIndex
+	cmp ESI, EDI
+	je ok
+GET_SECTION_STUDENT_NUMBER:
+	cmp ESI,EDI
+	je CALCULATE
+	add EDI, 2
+	mov AL, FIELD_DELIMETER
+	SKIP_NAME:
+		mov BL, [EDI]
+		cmp [EDI], AL
+		je CONTINUE
+		inc EDI
+	jmp SKIP_NAME
+CONTINUE:
+	add EDI,3
+	mov BL,[EDI]
+	cmp BL,1
+	jne SECTION_2
+	inc section1
+	jmp CONT
+SECTION_2:
+	inc section2
+CONT:
+	add EDI, 3
+	loop GET_SECTION_STUDENT_NUMBER
+CALCULATE:
 	mov AL, SECTIONID         ; Moving SECTIOND "INPUT"
 	mov BL, section1		  ; Moving counter Of section1 
 	cmp AL, 1				  ; Compare the SECTIONID with First Section
@@ -381,7 +402,8 @@ SEC_2:
 
 	; Getting Last Record Delimeter Index
 	mov ECX, LENGTHOF buffer
-	mov AL, RECORD_DELIMETER
+	mov AL, 13
+	mov AL, 10
 	call getLastIndex
 	mov AL, ID
 	mov [ESI], AL
@@ -419,13 +441,16 @@ SEC_2:
 	mov [ESI], AL			 ; Add SECTIONID To Buffer
 	inc ESI
 	
-	mov AL,RECORD_DELIMETER	
+	mov AL, 13
+	mov AL, 10
 	mov	[ESI],AL
 
 	jmp DONE
 	err:
 
 	DONE:
+	mov EDX, offset buffer 
+	call writestring
 	ret
 enrollStudent ENDP
 
@@ -520,20 +545,28 @@ GetAlphabeticalGrade ENDP
 ; Returns: The OFFSET in the ESI
 ; --------------------------------------------------------------
 
-getLastIndex PROC USES EDX EAX ECX
+getLastIndex PROC USES EDX EAX ECX EDI
 	mov ECX, LENGTHOF buffer
 	mov EDX, offset buffer
 	mov ESI, offset buffer
-	mov AL, RECORD_DELIMETER
 LAST_RECORD_CHECK:
-	cmp [EDX], AL  ; Comparing Current OFFSET with the Record Del.
-	jne CONT
-	mov ESI, EDX   ; IF Equal, Save the Current OFFSET to ESI
-	inc ESI		   ; INC ESI to point on the byte after the Record Del.
-	CONT:
-		inc EDX
+	mov EDI, ESI
+	mov AL, FIELD_DELIMETER
+	add ESI, 2
+SKIP_NAME:
+		cmp [ESI], AL
+		je CONTINUE
+		inc ESI
+		dec ECX
+		cmp ECX, 0
+		je RETURN
+	jmp SKIP_NAME
+CONTINUE:
+	add ESI, 6
+	sub ECX, 5
 	loop LAST_RECORD_CHECK
-	
+RETURN:
+	mov ESI, EDI
 	ret
 getLastIndex ENDP
 
@@ -594,8 +627,7 @@ saveDatabase ENDP
 
 
 ; --------------------------------------------------------------
-; Copies: the undeleted records in input Array to the Output Array
-;		  and XORing each BYTE with the DB KEY.
+; Copies: the input Array to the Output Array
 ; Recieves: ESI = OFFSET to the Input Array
 ;			EDI = OFFSET to the Output Array
 ;			ECX = Length of the Input Array
@@ -631,10 +663,9 @@ COPY_LOOP:
 
 	CONTINUE:
 	inc ESI
-	dec ECX
 	cmp ECX, 0
 	je RETURN  ; Checking if ECX Reached the End during Record Skipping
-jmp COPY_LOOP
+	LOOP COPY_LOOP
 	
 RETURN:
 	ret
@@ -674,24 +705,32 @@ sortIDs PROC USES EAX ECX ESI EDI
 	ret 
 sortIDs ENDP
 ;---------------------------------------------------------------------
-;Recieves student's id in al
 ;display student's data
+;Recieves student's id in AL
+;RETURN VOID
 ;---------------------------------------------------------------------
 PrintStudent PROC
 mov EBX,EAX
 call getLastIndex
 mov EDI, OFFSET buffer
-mov AL, RECORD_DELIMETER
-cld
+mov AL, FIELD_DELIMETER
 
 ID_SEARCH:
-	cmp [EDI], ESI
+	cmp EDI, ESI		;check end of buffer
 	je ERROR
 	cmp [EDI],BL  ;compare buffer byte with id
 	je IDFOUND
-	mov ECX, lengthof buffer
-	repne SCASB
-	je ID_SEARCH
+
+	add EDI,2
+	skipName:
+		cmp [EDI], AL	;check end of name
+		je CONTINUE
+		inc EDI
+	jmp skipName
+
+	CONTINUE:	
+		add EDI, 5
+jmp ID_SEARCH
 
 ;ERROR OCCURED
 ERROR:
@@ -700,167 +739,251 @@ call writeString
 ret
 
 IDFOUND:
-movzx EAX, byte ptr [EDI]
-call writeDec  ;display ID
+	movzx EAX, byte ptr [EDI]
+	call writeDec  ;display ID
 
-mov AL," "
-call writeChar
+	mov AL," "
+	call writeChar
 
-inc EDI
-inc EDI
-mov BL, FIELD_DELIMETER
-mov ecx, BUFFER_SIZE
-DisplayName:
-cmp [EDI], BL
-je END_OF_NAME
-mov AL, [EDI]
-call writeChar
-inc EDI
-loop DisplayName
-END_OF_NAME:
-mov AL," "
-call writeChar
+	inc EDI
+	inc EDI
+	mov BL, FIELD_DELIMETER
+	mov ecx, BUFFER_SIZE
+	DisplayName:
+		cmp [EDI], BL
+		je END_OF_NAME
+		mov AL, [EDI]
+		call writeChar
+		inc EDI
+	loop DisplayName
+	END_OF_NAME:
+		mov AL," "
+		call writeChar
 
-inc EDI
-movzx EAX,byte ptr [EDI]
-call writeDec ;display grade
+		inc EDI
+		movzx EAX,byte ptr [EDI]
+		call writeDec ;display grade
 
-mov AL," "
-call writeChar
+		mov AL," "
+		call writeChar
 
-inc EDI
-inc EDI
-movzx EAX, byte ptr[EDI]
-call writeDec ;display sec id
-call crlf
-ret
+	inc EDI
+	inc EDI
+	movzx EAX, byte ptr[EDI]
+	call writeDec ;display sec id
+	call crlf
+	ret
 PrintStudent ENDP
+
+
 ;-----------------------------------------------------------
 ;takes section number, get section's studetns's id, sort them,
 ;get sorted id's students from "buffer"
 ;create new file, put the buffer in it
-;recieves section number in eax
-;returns void
+;RECIEVES section number in eax
+;RETURNS void
 ;-----------------------------------------------------------
 generateSectionReport PROC USES EDX ECX EDI EBX ESI EAX
+push EAX  ;store section number
+
 mov EDX, OFFSET IDs
 mov ECX, lengthof IDs
 call clearArray
+
 mov EDX, OFFSET SectionStudents
 mov ECX, lengthof SectionStudents
 call clearArray
+
+;get last offset in the buffer
 call getLastIndex
 mov EDI, OFFSET buffer
 mov EDX, OFFSET IDs
-mov ECX, LENGTHOF IDs
-;section number in eax
-;esi contains last offset int buffer
-getSectionIDs:
-mov BL, [EDI]  ;store student's ID temp
-;skip until record delimeter
-push ECX
-push EBX
-mov ECX, lengthof buffer
-mov BL, RECORD_DELIMETER
-skipRecord:
-cmp [EDI],BL
-je END_OF_RECORD
-inc EDI
-loop skipRecord
-;jmp ERROR
-END_OF_RECORD:
-pop EBX
-pop ECX
 
-dec EDI
-cmp [EDI],AL
-jne continue
-;add id
-mov [EDX], BL
-inc EDX
-continue:
-inc EDI
-inc EDI
-cmp EDI,ESI  ; Check end of buffer
-je SORT
-loop getSectionIDs
+;get all section IDs
+getSectionIDs:
+	mov BL, [EDI]  ;store student's ID temp
+
+	;skip until record delimeter
+	;push ECX
+	push EBX
+	;mov ECX, lengthof buffer
+	mov BL, FIELD_DELIMETER
+	skipRecord:
+		add EDI,2  ;skip id
+		skipName:
+			cmp [EDI], BL  ;check end of name
+			je CNT
+			inc EDI
+		jmp skipName
+		CNT:
+		 add EDI, 3	;skip grade
+
+END_OF_RECORD:
+		pop EBX
+
+		cmp [EDI], AL 
+		jne continue	;student is not from the required section
+		;ADD Student ID in IDs array
+		mov [EDX], BL
+		inc EDX	
+		continue:
+			;skip 2 bytes to the begining of the next record
+			add EDI, 3
+			cmp EDI,ESI  ; Check end of buffer
+			je SORT
+jmp getSectionIDs
 
 SORT:
-mov esi, offset IDs
-call sortIDs
+	mov esi, offset IDs
+	mov BL,0
+	cmp [ESI], BL	
+	je NO_STUDENTS_FOUND  ; no students in the section
+	call sortIDs	
+	jmp getStudents
 
-call crlf
-;get students from buffer with ids
-;create new file
-mov EDX, OFFSET IDs
-mov ECX, LENGTHOF IDs
-;TODO esi contains last offset in buffer
+	NO_STUDENTS_FOUND:	  ;display error msg, break the PROC
+		mov EDX, OFFSET NO_STUDENTS_ERROR
+		call writeString 
+		call crlf
+		pop EAX
+		ret
 
-mov ESI, OFFSET SectionStudents
-mov AL, RECORD_DELIMETER
+;get students by sorted IDs
+getStudents:
+	mov EDX, OFFSET IDs
+	mov ECX, LENGTHOF IDs
+	;TODO esi contains last offset in buffer
 
-iterateIDs:
-mov BL, 0
-cmp [EDX], BL  ;check for end of ids
-je END_OF_IDs
+	mov ESI, OFFSET SectionStudents
 
-mov BL, [EDX]  ;store id 
-push ECX
-mov EDI, OFFSET buffer
-mov ECX, LENGTHOF buffer
+	iterateIDs:
+	mov AL, FIELD_DELIMETER
+	mov BL, 0
+	cmp [EDX], BL  ;check ids termination
+	je END_OF_IDs
 
-	studentSearch:
-	;TODO check end of buffer
-	cmp [EDI],BL  ;check if student's id == id
-	je STUDENT_FOUND
-	SKIP_RECORD:
-		cmp [EDI],AL
-		je CONTINUE_SEARCH  ;search end of record
-		inc EDI
-	loop SKIP_RECORD
-	CONTINUE_SEARCH:
-	inc EDI
-	loop studentSearch
+	mov BL, [EDX]  ;store ID 
+	;push ECX		;store outer loop counter
+	
+	;iterate over "buffer" until reach ID record
+	mov EDI, OFFSET buffer
 
-;TODO ERROR Student is not found
-STUDENT_FOUND:
-	mov ECX, lengthof buffer
-	copyStudent:
-		cmp [EDI], AL ;check for end of record
-		je END_OF_RECORDs
-		mov BL, [EDI] 
-		mov [ESI], BL ;copy the record 
+		studentSearch:
+		;TODO check end of buffer
+		cmp [EDI], BL  ;check if student's id == id
+		je STUDENT_FOUND
+
+		SKIP_RECORD:
+			add EDI, 2  ;SKIP ID
+			skip:
+				cmp [EDI], AL  ;CHECK END OF NAME
+				je END_OF_NAME
+				inc EDI
+			jmp skip
+	END_OF_NAME:
+		add EDI, 6
+
+		CONTINUE_SEARCH:
+			;inc EDI		;skip record Delimter
+		loop studentSearch
+
+	STUDENT_FOUND:
+		;mov ID to convert it into string
+		movzx EAX, byte ptr[EDI]
+		inc EDI ;skip ID byte
+		inc EDI ;skip delmieter byte
+		push ESI
+		mov ESI , OFFSET convertedNum
+		call parseNumberString	
+		pop ESI
+		mov EBX, ECX
+		mov EBX, OFFSET convertedNum
+		;copy string ID into sectionStudents array
+		copyID:
+			mov AL, [EBX]
+			mov [ESI], AL
+			inc ESI
+		loop copyID
+		;ADD delimeter
+		mov AL,' '
+		mov [ESI],AL
+		mov AL, FIELD_DELIMETER
+		inc ESI
+
+		;copy student name into sectionStudents array
+		mov ECX, lengthof buffer	
+		copyName:
+			cmp AL, [EDI] ;check end of name
+			je COPY
+			mov BL, [EDI]
+			mov [ESI], BL
+			inc ESI
+			inc EDI
+		loop copyName
+
+	COPY:
+		;ADD Delimeter
+		mov AL, ' '
+		mov [ESI], AL	
 		inc ESI
 		inc EDI
-	loop copyStudent
-;TODO ERROR end of record is not reached
-END_OF_RECORDs:
-	dec ESI
-	dec ESI
-	dec ESI
-	push EAX
-	movzx EAX, byte ptr[ESI]
-	call GetAlphabeticalGrade
-	inc ESI
-	inc ESI
-	mov [ESI], AL
-	inc ESI
-	mov BL, [EDI] 
-	mov [ESI],BL ;copy record delimeter
-	inc ESI
-	pop EAX
-	pop ECX
-	inc EDX
-loop iterateIDs
 
+		;copy numeric grade
+		push ESI
+		;convert numeric grade into string
+		movzx EAX, byte ptr [EDI]	
+		mov ESI, OFFSET convertedNum	
+		call parseNumberString 
+		pop ESI
+		mov EBX, OFFSET convertedNum
+		copyGrade:
+			mov AL,[EBX]
+			mov [ESI], AL	
+			inc ESI
+		loop copyGrade
+	
+		mov AL,' '
+		mov [ESI], AL
+		inc ESI
 
+		;get alphabetic grade
+		movzx EAX, byte ptr[EDI]
+		call GetAlphabeticalGrade
+		; al contains alphabetic grade
+		;copy alphabetic grade
+		mov [ESI], AL
+		inc ESI
+		
+		;ADD new line
+		mov AL, 13
+		mov [ESI],AL
+		inc ESI
+		mov AL, 10
+		mov [ESI],AL
+		inc ESI	
+
+		pop ECX
+		inc EDX
+		dec ECX
+		mov EBX,0
+		cmp EBX, ECX	;check end of IDs array
+	jne iterateIDs
 
 END_OF_IDs:
 
-ERROR:
-	mov EDX, OFFSET SECTIONFILENAME
+GET_FILE_NAME:
+	pop EAX		;Required Section Number
+	cmp AL, 1	
+	je Sec1
+	jmp Sec2
+	Sec1:
+		mov EDX, OFFSET SECTION1FILENAME
+		jmp CreateNewFile
+	Sec2:
+		mov EDX, OFFSET SECTION2FILENAME	
+	
+	CreateNewFile:
 	call CreateOutputFile
-
 	; Checking for File Handle Errors
 	cmp EAX, INVALID_HANDLE_VALUE
 	jne copytofile  ; No Error Found
@@ -870,7 +993,6 @@ ERROR:
 	ret					; Error Found
 
 copytofile:
-	; Writing the DB Key String to the Database File
 	mov EDX, OFFSET SectionStudents
 	mov ECX, LENGTHOF SectionStudents
 	push EAX      ; Saving File Handle
@@ -888,50 +1010,24 @@ copytofile:
 	call writeString
 	call CRLF
 	ret
+
 DONE_SAVING:
 	mov EDX, OFFSET successString
 	call writeString
 	call CRLF
-done:
+
+CLEAR_ARRAYS:
 mov EDX, OFFSET IDs
 mov ECX, lengthof IDs
 call clearArray
 
-;print record
 mov EDX, OFFSET SectionStudents
-call writeString
-mov ECX, 2
-display:
-movzx EAX, byte ptr[EDX]
-call writeInt
-inc EDX
-inc EDX
-push ECX
 mov ECX, lengthof SectionStudents
-mov BL, FIELD_DELIMETER
-displayName:
-cmp [EDX], BL
-je END_OF_NAME
-mov AL, [EDX]
-call writeChar
-inc EDX
-loop displayName
-END_OF_NAME:
-call crlf
-pop ECX
-inc EDX
-movzx eax, byte ptr[edx]
-call writeInt
-inc EDX
-inc EDX
-mov AL, [EDX]
-call writeChar
-call crlf
-loop display
+call clearArray
 
-	
 ret
 generateSectionReport ENDP
+
 
 ;TODO REPLACE PROC
 ;-----------------------------------------------------------------------------------------
