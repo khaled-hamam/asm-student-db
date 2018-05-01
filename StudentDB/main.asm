@@ -102,7 +102,7 @@ ENROLL:
 	mov [EDX],al
 	call enrollStudent
 
-	; call printStudents 
+	 call printStudents 
 	jmp Done
 
 SAVE:
@@ -457,10 +457,38 @@ printStudents PROC
 	call getLastIndex
 	mov EDI, ESI
 	mov ESI, OFFSET buffer
+	cmp ESI,EDI
+	je RETURN
 	mov ECX, LENGTHOF buffer
 BUFFER_LOOP:
-	
+		cmp ESI, EDI
+		je RETURN
+		mov Al, [ESI]
+		call writechar
+		add ESI, 2
+		mov BL, FIELD_DELIMETER
+		mov Al,' '
+		call writechar
+SKIP_NAME:
+		cmp [ESI], BL
+		je CONTINUE
+		mov AL,[ESI]
+		call writechar
+		inc ESI
+	jmp SKIP_NAME
+CONTINUE:
+	add ESI, 1
+	mov Al,' '
+	call writechar
+	mov Al, [ESI]
+	call writechar
 
+	add ESI, 2
+	mov Al,' '
+	call writechar
+	mov Al, [ESI]
+	call writechar
+	add ESI, 3
 	loop BUFFER_LOOP
 
 
