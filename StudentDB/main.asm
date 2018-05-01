@@ -65,7 +65,7 @@ OPEN:
 	mov EDX, OFFSET filename
 	call openDatabase
 	jmp Done
-
+ 
 ENROLL:
 	mov EDX,OFFSET EnterID
 	call writeString
@@ -594,7 +594,8 @@ saveDatabase ENDP
 
 
 ; --------------------------------------------------------------
-; Copies: the input Array to the Output Array
+; Copies: the undeleted records in input Array to the Output Array
+;		  and XORing each BYTE with the DB KEY.
 ; Recieves: ESI = OFFSET to the Input Array
 ;			EDI = OFFSET to the Output Array
 ;			ECX = Length of the Input Array
@@ -615,18 +616,25 @@ COPY_LOOP:
 	jmp CONTINUE
 
 	SKIP_RECORD:
-		; Checking for a Record Delimter
-		mov BL, RECORD_DELIMETER  
-		cmp [ESI], BL
-		je CONTINUE  ; New Record Found
-		inc ESI
-	LOOP SKIP_RECORD
+		add ESI, 2
+		SKIP_NAME:
+			mov BL, FIELD_DELIMETER
+			cmp [ESI], BL
+			je CONTINUE_SKIP  ; Next field is found
+			inc ESI
+			dec ECX
+		jmp SKIP_NAME
+	
+	CONTINUE_SKIP:
+		add ESI, 4
+		sub ECX, 4
 
 	CONTINUE:
 	inc ESI
+	dec ECX
 	cmp ECX, 0
 	je RETURN  ; Checking if ECX Reached the End during Record Skipping
-	LOOP COPY_LOOP
+jmp COPY_LOOP
 	
 RETURN:
 	ret
