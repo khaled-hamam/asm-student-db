@@ -158,9 +158,8 @@ SEARCH_ID:
 		inc EDX
 	jmp skipName
 
-CONTINUE:
-	add EDX, 6
-
+	CONTINUE:
+		add EDX, 6
 jmp SEARCH_ID
 
 ERROR_FOUND:
@@ -666,11 +665,14 @@ call writeString
 ret
 
 IDFOUND:
-	movzx EAX, byte ptr [EDI]
-	call writeDec  ;display ID
-
+	mov EDX, studentData
+	mov AL,  [EDI]
+	mov [EDX], AL		;mov ID
+	inc EDX
+	
 	mov AL," "
-	call writeChar
+	mov [EDX], AL
+	inc EDX
 
 	inc EDI
 	inc EDI
@@ -680,25 +682,29 @@ IDFOUND:
 		cmp [EDI], BL
 		je END_OF_NAME
 		mov AL, [EDI]
-		call writeChar
+		mov [EDX], AL	
+		inc EDX
 		inc EDI
 	loop DisplayName
 	END_OF_NAME:
 		mov AL," "
-		call writeChar
+		mov [EDX], AL
+		inc EDX
 
 		inc EDI
-		movzx EAX,byte ptr [EDI]
-		call writeDec ;display grade
+		mov AL, [EDI]
+		mov [EDX], AL  ;mov Grade
+		inc EDX
 
 		mov AL," "
-		call writeChar
+		mov [EDX], AL	
+		inc EDX
 
 	inc EDI
 	inc EDI
-	movzx EAX, byte ptr[EDI]
-	call writeDec ;display sec id
-	call crlf
+	mov AL, [EDI]	;mov Section Number
+	mov [EDX], AL	
+	inc EDX
 	ret
 printStudent ENDP
 
@@ -715,7 +721,6 @@ printStudent ENDP
 ; --------------------------------------------------------------
 generateSectionReport PROC USES EDX ECX EDI EBX ESI EAX reportSection: BYTE, reportFileName: PTR BYTE
 movzx EAX, reportSection
-push EAX  ;store section number
 
 mov EDX, OFFSET IDs
 mov ECX, lengthof IDs
@@ -776,7 +781,6 @@ SORT:
 		mov EDX, OFFSET NO_STUDENTS_ERROR
 		call writeString 
 		call crlf
-		pop EAX
 		ret
 
 ;get students by sorted IDs
@@ -908,16 +912,8 @@ getStudents:
 END_OF_IDs:
 
 GET_FILE_NAME:
-	pop EAX		;Required Section Number
-	cmp AL, 1	
-	je Sec1
-	jmp Sec2
-	Sec1:
-		mov EDX, OFFSET SECTION1FILENAME
-		jmp CreateNewFile
-	Sec2:
-		mov EDX, OFFSET SECTION2FILENAME	
-	
+	mov EDX, reportFileName
+
 	CreateNewFile:
 	call CreateOutputFile
 	; Checking for File Handle Errors
