@@ -7,21 +7,17 @@ RECORD_DELIMETER = '@'
 .data
 IDs BYTE 21 DUP(?), 0
 SectionStudents BYTE BUFFER_SIZE DUP(?) , 0
-convertedNum BYTE 3 DUP(?), 0
-NO_STUDENTS_ERROR BYTE "THERE IS NO STUDENTS IN THIS SECTION", 0
-CHOICES BYTE "PRESS (1) TO OPEN DATABASE ", 10, 13, "PRESS (2) TO Enroll new Student ", 10, 13, "PRESS (3) TO Save DATABASE ", 10, 13, "PRESS (4) TO Update Student's Grade ", 10, 13, "PRESS (5) TO Delete a Student ", 10, 13, "PRESS (6) TO Print Student", 10, 13, "PRESS (7) TO PRINT SPECIFIC STUDENT", 10, 13, "Press (8) To Generate Section Report", 10, 13, 0
-RepeatChoice BYTE "Do you want to Enter another choice? 'y/n' ",10 ,13, 0
+CHOICES BYTE "PRESS (1) TO OPEN DATABASE ", 10, 13, "PRESS (2) TO Enroll new Student ", 10, 13, "PRESS (3) TO Save DATABASE ", 10, 13, "PRESS (4) TO Update Student's Grade ", 10, 13, "PRESS (5) TO Delete a Student ", 10, 13, "PRESS (6) TO Print Student", 10, 13, "PRESS (7) TO PRINT SPECIFIC STUDENT", 10, 13, 0
+RepeatChoice BYTE "DO you want to Enter another choice? 'y/n' ",10 ,13, 0
 EnterID BYTE "ENTER STUDENT'S ID: ", 0
 EnterName BYTE "ENTER STUDENT'S Name: ", 0
 EnterGrade BYTE "ENTER STUDENT'S Grade: ", 0
 EnterSec BYTE "ENTER STUDENT'S Section Number (1-2): ", 0
 EnterKey BYTE "ENTER DATA BASE KEY: ", 0
-EnterSecNum BYTE "ENTER SECTION NUMBER: ", 0
 CopiedBuffer BYTE BUFFER_SIZE DUP(?)
 buffer BYTE	BUFFER_SIZE DUP(?)
 encryptedBuffer BYTE 0, BUFFER_SIZE DUP(?)
-SECTION1FILENAME BYTE "Section1.txt", 0
-SECTION2FILENAME BYTE "Section2.txt", 0
+SECTIONFILENAME BYTE "F:\Downloads\Irvine\Project_Template\files\check.txt", 0
 filename BYTE "database.txt", 0
 DBKEY BYTE 65
 fileHandle HANDLE ?
@@ -30,7 +26,6 @@ successString BYTE "Saving Completed.", 0
 
 section1 BYTE 0
 section2 BYTE 0
-
 
 ID BYTE ?
 GRADE BYTE ?
@@ -60,8 +55,6 @@ RepeatChoices:
 	je DisplayAll
 	cmp EAX,7
 	je DisplayStudent
-	cmp EAX, 8
-	je generateReport
 	jmp Done
 
 OPEN:
@@ -104,7 +97,7 @@ ENROLL:
 	mov [EDX],al
 	call enrollStudent
 
-	call printStudents 
+	; call printStudents 
 	jmp Done
 
 SAVE:
@@ -131,29 +124,21 @@ UPDATE:
 
 
 Delete:
-	mov EDX, OFFSET EnterID
-	call writeString
 	call readInt
 	call DeleteStudent
+	call printStudents 
 	jmp DONE
 
 DisplayAll:
+;	call readInt
 	call printStudents 
 	jmp Done
 
 DisplayStudent:
-	mov EDX, OFFSET EnterID
-	call writeString
-	call readInt
-	call printStudent
-	jmp Done
-
-generateReport:
-	mov EDX, OFFSET EnterSecNum
-	call writeString
 	call readInt
 	call generateSectionReport
 	jmp Done
+
 Done:
 	mov EDX, OFFSET RepeatChoice
 	call writeString
@@ -366,27 +351,37 @@ DeleteStudent ENDP
 ; Input: Student ID, Student Name, Student Grade, Student section 
 ; --------------------------------------------------------------
 enrollStudent PROC USES EDX ECX EBX ESI EAX EDI ;sId:byte, sName:byte, intGrade:byte, sectionNum:byte
-	; Validating Section Size
-	mov ESI, OFFSET buffer  
-	mov ECX, LENGTHOF buffer  ; Loop On BUFFER_SIZE
-	mov AL, RECORD_DELIMETER  ; Get NewLine Delimeter
-	; Count Number Of Students In Each Section
-GET_SECTION_STUDENT_NUMBER:
-		cmp [ESI], AL         ; Comparing Current OFFSET with the Record Del
-		je FOUND_DELIMETER    ; Jump If Delimeter Found
-		jmp CONTINUE		  
-		FOUND_DELIMETER:
-			mov BL, [ESI -1]  ; Copy the Byte Before Delimeter Which Contains Section ID
-			cmp BL, 1         ; Compare the Section ID with First Section 
-			jne SECTION_2     ; jump If Not First Section ID
-			inc section1	  ; INC section1 Counter
-			jmp CONTINUE      
-		SECTION_2:
-			inc section2      ; INC section2 Counter
-		CONTINUE:
-			inc ESI           ; INC Current OFFSET
-	loop GET_SECTION_STUDENT_NUMBER
 
+	; Validating Section Size
+	mov ECX, LENGTHOF buffer
+	mov EDI, offset buffer
+	call getLastIndex
+	cmp ESI, EDI
+	je ok
+GET_SECTION_STUDENT_NUMBER:
+	cmp ESI,EDI
+	je CALCULATE
+	add EDI, 2
+	mov AL, FIELD_DELIMETER
+	SKIP_NAME:
+		mov BL, [EDI]
+		cmp [EDI], AL
+		je CONTINUE
+		inc EDI
+	jmp SKIP_NAME
+CONTINUE:
+	add EDI,3
+	mov BL,[EDI]
+	cmp BL,1
+	jne SECTION_2
+	inc section1
+	jmp CONT
+SECTION_2:
+	inc section2
+CONT:
+	add EDI, 3
+	loop GET_SECTION_STUDENT_NUMBER
+CALCULATE:
 	mov AL, SECTIONID         ; Moving SECTIOND "INPUT"
 	mov BL, section1		  ; Moving counter Of section1 
 	cmp AL, 1				  ; Compare the SECTIONID with First Section
@@ -402,7 +397,8 @@ SEC_2:
 
 	; Getting Last Record Delimeter Index
 	mov ECX, LENGTHOF buffer
-	mov AL, RECORD_DELIMETER
+	mov AL, 13
+	mov AL, 10
 	call getLastIndex
 	mov AL, ID
 	mov [ESI], AL
@@ -440,13 +436,16 @@ SEC_2:
 	mov [ESI], AL			 ; Add SECTIONID To Buffer
 	inc ESI
 	
-	mov AL,RECORD_DELIMETER	
+	mov AL, 13
+	mov AL, 10
 	mov	[ESI],AL
 
 	jmp DONE
 	err:
 
 	DONE:
+	mov EDX, offset buffer 
+	call writestring
 	ret
 enrollStudent ENDP
 
@@ -541,20 +540,28 @@ GetAlphabeticalGrade ENDP
 ; Returns: The OFFSET in the ESI
 ; --------------------------------------------------------------
 
-getLastIndex PROC USES EDX EAX ECX
+getLastIndex PROC USES EDX EAX ECX EDI
 	mov ECX, LENGTHOF buffer
 	mov EDX, offset buffer
 	mov ESI, offset buffer
-	mov AL, RECORD_DELIMETER
 LAST_RECORD_CHECK:
-	cmp [EDX], AL  ; Comparing Current OFFSET with the Record Del.
-	jne CONT
-	mov ESI, EDX   ; IF Equal, Save the Current OFFSET to ESI
-	inc ESI		   ; INC ESI to point on the byte after the Record Del.
-	CONT:
-		inc EDX
+	mov EDI, ESI
+	mov AL, FIELD_DELIMETER
+	add ESI, 2
+SKIP_NAME:
+		cmp [ESI], AL
+		je CONTINUE
+		inc ESI
+		dec ECX
+		cmp ECX, 0
+		je RETURN
+	jmp SKIP_NAME
+CONTINUE:
+	add ESI, 6
+	sub ECX, 5
 	loop LAST_RECORD_CHECK
-	
+RETURN:
+	mov ESI, EDI
 	ret
 getLastIndex ENDP
 
@@ -756,6 +763,8 @@ IDFOUND:
 	call crlf
 	ret
 PrintStudent ENDP
+
+
 ;-----------------------------------------------------------
 ;takes section number, get section's studetns's id, sort them,
 ;get sorted id's students from "buffer"
@@ -1008,6 +1017,7 @@ call clearArray
 ret
 generateSectionReport ENDP
 
+
 ;TODO REPLACE PROC
 ;-----------------------------------------------------------------------------------------
 ;Clear the array
@@ -1028,9 +1038,9 @@ clearArray ENDP
 ; Parse: the integer value to string Database File
 ; Recieves: ESI = OFFSET to the empty number string	
 ;			EAX  = Integer Value
-; Returns: ECX = Length of the Number String
+; Returns: VOID
 ; --------------------------------------------------------------
-parseNumberString PROC USES ESI EAX EBX EDI EDX
+parseNumberString PROC USES ESI EAX
 	mov ECX, 0
 	push ESI  ; Saving the OFFSET Value
 	PARSING_LOOP:
@@ -1046,9 +1056,9 @@ parseNumberString PROC USES ESI EAX EBX EDI EDX
 		inc ESI 
 		cmp EAX, 0				 ; Checking the End of Value
 	jne PARSING_LOOP
- 
+
 	pop ESI   ; Retrieving the OFFSET Value
-	mov EDI, ESI  ; Saving the ESI OFFSET Value
+	mov EDI, ESI
 	mov EBX, ECX  ; Saving the ECX Value 
 	; Reversing the String
 	mov EAX, 0
@@ -1057,7 +1067,7 @@ parseNumberString PROC USES ESI EAX EBX EDI EDX
 		push EAX
 		inc ESI
 	LOOP PUSH_STACK
- 
+	
 	mov ECX, EBX  ; Retrieving the Value of ECX
 	mov ESI, EDI  ; Retrieving the Value of ESI
 	POP_STACK:
@@ -1065,10 +1075,10 @@ parseNumberString PROC USES ESI EAX EBX EDI EDX
 		mov [ESI], AL
 		inc ESI
 	LOOP POP_STACK
- 
-	mov ECX, EBX  ; Returning the Length of the String in ECX
+
 	ret
 parseNumberString ENDP
+
 
 ; DllMain is required for any DLL
 DllMain PROC hInstance:DWORD, fdwReason:DWORD, lpReserved:DWORD 
