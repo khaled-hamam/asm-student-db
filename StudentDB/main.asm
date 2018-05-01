@@ -6,10 +6,11 @@ FIELD_DELIMETER = '/'
 RECORD_DELIMETER = '@'
 .data
 IDs BYTE 21 DUP(?), 0
+Grades BYTE 21 DUP(?), 0
 SectionStudents BYTE BUFFER_SIZE DUP(?) , 0
 convertedNum BYTE 3 DUP(?), 0
 NO_STUDENTS_ERROR BYTE "THERE IS NO STUDENTS IN THIS SECTION", 0
-CHOICES BYTE "PRESS (1) TO OPEN DATABASE ", 10, 13, "PRESS (2) TO Enroll new Student ", 10, 13, "PRESS (3) TO Save DATABASE ", 10, 13, "PRESS (4) TO Update Student's Grade ", 10, 13, "PRESS (5) TO Delete a Student ", 10, 13, "PRESS (6) TO Print Student", 10, 13, "PRESS (7) TO PRINT SPECIFIC STUDENT", 10, 13, "Press (8) To Generate Section Report", 10, 13, 0
+CHOICES BYTE "PRESS (1) TO OPEN DATABASE ", 10, 13, "PRESS (2) TO Enroll new Student ", 10, 13, "PRESS (3) TO Save DATABASE ", 10, 13, "PRESS (4) TO Update Student's Grade ", 10, 13, "PRESS (5) TO Delete a Student ", 10, 13, "PRESS (6) TO Print Student", 10, 13, "PRESS (7) TO PRINT SPECIFIC STUDENT", 10, 13, "Press (8) To Generate Section Report", 10, 13, "Press (9) To Display Top 5 Students", 10, 13, 0
 RepeatChoice BYTE "Do you want to Enter another choice? 'y/n' ",10 ,13, 0
 EnterID BYTE "ENTER STUDENT'S ID: ", 0
 EnterName BYTE "ENTER STUDENT'S Name: ", 0
@@ -62,6 +63,8 @@ RepeatChoices:
 	je DisplayStudent
 	cmp EAX, 8
 	je generateReport
+	cmp EAX, 9
+	je DisplayTop5
 	jmp Done
 
 OPEN:
@@ -157,6 +160,8 @@ generateReport:
 	call generateSectionReport
 	jmp Done
 
+	DisplayTop5:
+	call Top5Students
 Done:
 	mov EDX, OFFSET RepeatChoice
 	call writeString
@@ -1121,7 +1126,212 @@ parseNumberString PROC USES ESI EAX EBX EDI EDX
 	ret
 parseNumberString ENDP
 
+; --------------------------------------------------------------
+; Sort:	Sort section Grades
+; Recieves: ESI = OFFSET to the Grades Array
+; Returns: VOID
+; --------------------------------------------------------------
+sortGrades PROC USES EAX ECX EDI ESI
+	mov ECX, lengthof Grades
+	dec ECX 
+	outerLoop:
+		push ECX
+		mov ESI, offset Grades
+		mov AL, [ESI]
+		cmp AL, 0
+		je terminate
+		innerLoop:
+			mov AL,[ESI+1]
+			cmp AL, 0
+			je noExchange
+			mov AL, [ESI]
+			cmp AL, [ESI+1]
+			jg noExchange
+			xchg AL,[ESI+1]
+			mov [ESI],AL
+			noExchange:
+			inc ESI
+		LOOP innerLoop
+		pop ECX
+	LOOP outerLoop
+	terminate:
 
+	ret 
+sortGrades ENDP
+;-----------------------------------------------------------
+;takes section number, get section's Students Grades, sort them descendingly,
+;get sorted Students Grades from "buffer"
+;Display Top 5 Students
+;recieves : void
+;returns void
+;-----------------------------------------------------------
+Top5Students PROC
+	mov EDX, offset CopiedBuffer
+	mov ECX, lengthof CopiedBuffer
+	call clearArray
+
+	mov EDI, offset buffer
+	mov EDX, offset CopiedBuffer
+	mov ECX, lengthof CopiedBuffer
+	call getLastIndex
+
+	copyBuffer:
+		cmp ESI, EDI
+		je stop
+		mov AL, [EDI]
+		mov [EDX], AL	
+		inc EDX
+		inc EDI	
+	LOOP copyBuffer
+	stop:
+	
+	mov EDX, offset Grades
+	mov ECX, lengthof Grades
+	call clearArray
+	call getLastIndex
+
+	mov EDI, offset buffer
+	mov EDX, offset Grades
+	mov ECX, lengthof Grades
+
+	getGrades:
+		push ECX
+		mov BL, FIELD_DELIMETER
+		mov ECX, lengthof CopiedBuffer
+		reachGrade:
+			mov AL, 0
+			cmp [EDI], AL
+			je SORT
+			add EDI, 2
+			mov BL, FIELD_DELIMETER
+			skipName:
+				mov AL, [EDI]
+				cmp [EDI], BL
+				je CNT
+				inc EDI
+			jmp skipName
+			CNT:
+				mov BL, [EDI+1]
+				mov [EDX], BL
+				inc EDX
+				add EDI, 6
+		LOOP reachGrade
+		cmp EDI, ESI		;check if end of buffer
+		je SORT
+		pop ECX
+	loop getGrades
+
+	SORT:
+	pop ECX
+	mov ESI, offset Grades
+	mov BL, 0
+	cmp [ESI], BL
+	je NO_STUDENTS_FOUND
+	call sortGrades
+	jmp getStudents
+
+	NO_STUDENTS_FOUND:	  ;display error msg, break the PROC
+		mov EDX, OFFSET NO_STUDENTS_ERROR
+		call writeString 
+		call crlf
+		ret
+
+getStudents:	
+	;Display Students from Buffer with Grades
+	mov EDX, offset Grades
+
+	iterateGrades:
+
+		mov BL, 0
+		cmp [EDX], BL  ;check for end of Grades
+		je END_OF_Grades
+
+		mov ECX, lengthof CopiedBuffer
+		mov EDI, offset CopiedBuffer
+
+		mov BL, [EDX]	; store student's grade
+			iterateAllRecords:
+				mov AL, [EDI]
+				push EAX
+				mov AL, Field_Delimeter
+
+				SKIP_RECORD:
+					add EDI, 2 ;Skip ID
+					skip:
+						cmp [EDI], AL
+						je END_OF_NAME
+						inc EDI
+					jmp skip	
+			END_OF_NAME:
+				pop EAX
+				cmp [EDI+1], BL
+				je StudentFound
+				add EDI, 6
+			loop iterateAllRecords
+			
+			StudentFound:		
+			;Print Student's Data
+				mov EBX,EAX
+				mov EDI, OFFSET buffer
+				mov AL, FIELD_DELIMETER
+
+				ID_SEARCH:
+					cmp [EDI],BL  ;compare buffer byte with id
+					je IDFOUND
+
+					add EDI,2
+					skipN:
+						cmp [EDI], AL	;check end of name
+						je CONTINUE
+						inc EDI
+					jmp skipN
+
+					CONTINUE:	
+						add EDI, 6
+				jmp ID_SEARCH
+
+				IDFOUND:
+					movzx EAX, byte ptr [EDI]
+					call writeDec  ;display ID
+
+					mov AL," "
+					call writeChar
+
+					inc EDI
+					inc EDI
+					mov BL, FIELD_DELIMETER
+					mov ecx, BUFFER_SIZE
+					DisplayName:
+						cmp [EDI], BL
+						je END_OFNAME
+						mov AL, [EDI]
+						call writeChar
+						inc EDI
+					loop DisplayName
+					END_OFNAME:
+						mov AL," "
+						call writeChar
+
+						inc EDI
+						movzx EAX,byte ptr [EDI]
+						call writeDec ;display grade
+
+						mov AL," "
+						call writeChar
+
+					inc EDI
+					inc EDI
+					movzx EAX, byte ptr[EDI]
+					call writeDec ;display sec id
+					call crlf						
+					
+					INC EDX
+	 jmp iterateGrades
+
+	END_OF_Grades:
+
+	ret
+Top5Students ENDP
 ; DllMain is required for any DLL
 DllMain PROC hInstance:DWORD, fdwReason:DWORD, lpReserved:DWORD 
 
