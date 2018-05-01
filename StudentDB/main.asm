@@ -876,9 +876,10 @@ getStudents:
 		pop ESI
 		mov EBX, OFFSET convertedNum
 		copyGrade:
-			mov AL,[EBX]
+			mov AL, [EBX]
 			mov [ESI], AL	
 			inc ESI
+			inc EBX
 		loop copyGrade
 	
 		mov AL,' '
