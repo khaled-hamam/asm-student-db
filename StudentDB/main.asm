@@ -132,15 +132,15 @@ openDatabase ENDP
 
 
 ;---------------------------------------------------------------
+; updateGrade PROC
+;
 ; Finds: Student by ID, and Update the grade
 ; Recieves: EBX = Student ID 
 ;			EAX = New Grade
-; Parameters: ID, GRADE
 ; Returns: VOID
 ;---------------------------------------------------------------
-updateGrade PROC
-	mov ID, BL
-	mov GRADE, AL
+updateGrade PROC USES EBX EAX EDX ECX updateStudentID: BYTE, updateStudentGrade: BYTE
+	movzx EBX, updateStudentID
 	
 	mov EDX, OFFSET buffer
 	mov ECX, BUFFER_SIZE
@@ -148,7 +148,7 @@ updateGrade PROC
 	
 ID_LOOP:
 	; Check for the ID
-	cmp [EDX],BL
+	cmp [EDX], BL
 	je ID_FOUND  ; ID IS FOUND
 	; CONTINUE
 	inc EDX
@@ -164,7 +164,7 @@ ID_FOUND:
 	; Skip Delimeter Byte
 	inc EDX
 	; mov delimeter 
-	mov AL,FIELD_DELIMETER
+	mov AL, FIELD_DELIMETER
 	; Max Size of file
 	mov ECX, BUFFER_SIZE
 	; Skip NAME Bytes
@@ -181,12 +181,12 @@ NAME_LOOP:
 
 END_OF_NAME:
 	inc EDX
-	mov AL, GRADE
+	mov AL, updateStudentGrade
 	mov [EDX], AL
 	; MOV GRADE
 
 END_OF_FILE:  ;Break the Loop
-	mov ECX,1
+	mov ECX, 1
 
 	ret
 updateGrade ENDP
