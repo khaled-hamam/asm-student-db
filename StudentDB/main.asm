@@ -192,14 +192,16 @@ END_OF_FILE:  ;Break the Loop
 updateGrade ENDP
 
 
-;--------------------------------------------------------------
-;receives ID IN AL
-;PUTS '*' in the first byte in the record
-;returns VOID
-;--------------------------------------------------------------
-DeleteStudent PROC USES EAX EBX EDI ECX ESI
-;recieves ID in AL
-mov EBX,EAX
+;---------------------------------------------------------------
+; deleteStudent PROC
+;
+; Finds: Student by ID, and delete the record by putting '*'
+;		 in the id field
+; Recieves: deleteID = Student ID 
+; Returns: VOID
+;---------------------------------------------------------------
+deleteStudent PROC USES EAX EBX EDI ECX ESI deleteID: BYTE
+movzx EBX, deleteID
 call getLastIndex
 mov EDI, OFFSET buffer
 mov AL, FIELD_DELIMETER
@@ -207,7 +209,7 @@ mov AL, FIELD_DELIMETER
 delete:
 	cmp EDI, ESI	;check end of buffer
 	je ERROR
-	cmp [EDI],BL  ;compare buffer byte with id
+	cmp [EDI], BL  ;compare buffer byte with id
 	je IDFOUND
 	;skip to next record
 	inc EDI		;skip ID	
@@ -234,7 +236,7 @@ IDFOUND:
 
 DONE:
 	ret
-DeleteStudent ENDP
+deleteStudent ENDP
 
 
 ; --------------------------------------------------------------
