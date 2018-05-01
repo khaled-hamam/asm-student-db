@@ -1127,7 +1127,9 @@ parseNumberString PROC USES ESI EAX EBX EDI EDX
 parseNumberString ENDP
 
 ; --------------------------------------------------------------
-; Sort:	Sort section Grades
+; sortGrades PROC
+;
+; Sorts: the students grades array
 ; Recieves: ESI = OFFSET to the Grades Array
 ; Returns: VOID
 ; --------------------------------------------------------------
@@ -1158,14 +1160,17 @@ sortGrades PROC USES EAX ECX EDI ESI
 
 	ret 
 sortGrades ENDP
-;-----------------------------------------------------------
-;takes section number, get section's Students Grades, sort them descendingly,
-;get sorted Students Grades from "buffer"
-;Display Top 5 Students
-;recieves : void
-;returns void
-;-----------------------------------------------------------
-Top5Students PROC
+
+
+; --------------------------------------------------------------
+; top5Students PROC
+;
+; Sorts: the student grades descendingly, get sorted Students Records
+;        by the Grades from "buffer", Displays the Top 5 Students
+; Recieves: studentsData = OFFSET to the studentsData array to be Filled
+; Returns: studentsData = The Top 5 Students Data Records
+; --------------------------------------------------------------
+top5Students PROC USES EAX EBX ECX EDX ESI EDI studentsData: PTR BYTE
 	mov EDX, offset CopiedBuffer
 	mov ECX, lengthof CopiedBuffer
 	call clearArray
@@ -1331,7 +1336,9 @@ getStudents:
 	END_OF_Grades:
 
 	ret
-Top5Students ENDP
+top5Students ENDP
+
+
 ; DllMain is required for any DLL
 DllMain PROC hInstance:DWORD, fdwReason:DWORD, lpReserved:DWORD 
 
