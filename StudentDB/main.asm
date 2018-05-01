@@ -648,12 +648,18 @@ COPY_LOOP:
 	jmp CONTINUE
 
 	SKIP_RECORD:
-		; Checking for a Record Delimter
-		mov BL, RECORD_DELIMETER  
-		cmp [ESI], BL
-		je CONTINUE  ; New Record Found
-		inc ESI
-	LOOP SKIP_RECORD
+		add ESI, 2
+		SKIP_NAME:
+			mov BL, FIELD_DELIMETER
+			cmp [ESI], BL
+			je CONTINUE_SKIP  ; Next field is found
+			inc ESI
+			dec ECX
+		jmp SKIP_NAME
+	
+	CONTINUE_SKIP:
+		add ESI, 5
+		sub ECX, 5
 
 	CONTINUE:
 	inc ESI
