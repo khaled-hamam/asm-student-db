@@ -80,19 +80,17 @@ BUFFER_SIZE_OK:
 
 ;copy the copied buffer to the buffer without the dbkey
 
-mov ECX, EAX
-dec ECX	
-mov EDX, OFFSET buffer
-mov EDI, OFFSET CopiedBuffer
-inc EDI
-COPY_BUFFER:
-mov BL, [EDI]
-cmp BL, 0
-je done
-mov [EDX], BL
-inc EDI
-inc EDX
-loop COPY_BUFFER
+	mov ECX, EAX
+	dec ECX	
+	mov EDX, OFFSET buffer
+	mov EDI, OFFSET CopiedBuffer
+	inc EDI
+	COPY_BUFFER:
+		je done
+		mov [EDX], BL
+		inc EDI
+		inc EDX
+	loop COPY_BUFFER
 done:
 ; Decrypt the buffer
 	mov ECX, EAX		      ; Moving File Size to ECX
@@ -126,7 +124,7 @@ ERROR_FOUND:
 	; TODO: Reset the buffer array
 	mov EDX, OFFSET errorString 
 	call writeString
-
+	call CRLF
 	ret
 openDatabase ENDP
 
@@ -135,36 +133,51 @@ openDatabase ENDP
 ; updateGrade PROC
 ;
 ; Finds: Student by ID, and Update the grade
-; Recieves: EBX = Student ID 
-;			EAX = New Grade
+; Recieves: updateStudentID = Student ID 
+;			updateStudentGrade = New Grade
 ; Returns: VOID
 ;---------------------------------------------------------------
-updateGrade PROC USES EBX EAX EDX ECX updateStudentID: BYTE, updateStudentGrade: BYTE
+updateGrade PROC USES EBX EAX EDX ECX ESI updateStudentID: BYTE, updateStudentGrade: BYTE
 	movzx EBX, updateStudentID
-	
-	mov EDX, OFFSET buffer
-	mov ECX, BUFFER_SIZE
-	mov SI, 0
-	
-ID_LOOP:
-	; Check for the ID
-	cmp [EDX], BL
-	je ID_FOUND  ; ID IS FOUND
-	; CONTINUE
-	inc EDX
-	loop ID_LOOP
 
+	mov EDX, OFFSET buffer
+	call getLastIndex
+	push EAX
+	mov AL, FIELD_DELIMETER
+
+SEARCH_ID:
+	cmp EDX, ESI
+	je ERROR_FOUND
+	cmp [EDX], BL
+	je ID_FOUND	
+	add EDX, 2	;skip ID
+
+	skipName:
+		cmp [EDX], AL  ;CHECK end of name
+		je CONTINUE 
+		inc EDX
+	jmp skipName
+
+CONTINUE:
+	add EDX, 6
+
+jmp SEARCH_ID
+
+ERROR_FOUND:
 	; ERROR ID IS NOT FOUND
 	mov EDX, OFFSET errorString 
 	call writeString
+	call crlf
+	pop EAX
 	jmp END_OF_FILE
 
 ID_FOUND:
+	pop EAX
 	inc EDX  ; Skip ID Byte
 	; Skip Delimeter Byte
 	inc EDX
 	; mov delimeter 
-	mov AL, FIELD_DELIMETER
+	mov AL,FIELD_DELIMETER
 	; Max Size of file
 	mov ECX, BUFFER_SIZE
 	; Skip NAME Bytes
@@ -177,6 +190,7 @@ NAME_LOOP:
 	; ERROR FOUND
 	mov EDX, OFFSET errorString 
 	call writeString
+	call crlf
 	jmp END_OF_FILE
 
 END_OF_NAME:
@@ -186,8 +200,6 @@ END_OF_NAME:
 	; MOV GRADE
 
 END_OF_FILE:  ;Break the Loop
-	mov ECX, 1
-
 	ret
 updateGrade ENDP
 
