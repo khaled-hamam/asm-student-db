@@ -449,8 +449,8 @@ SEC_2:
 	err:
 
 	DONE:
-	mov EDX, offset buffer 
-	call writestring
+	;mov EDX, offset buffer 
+	;call writestring
 	ret
 enrollStudent ENDP
 
