@@ -86,7 +86,7 @@ BUFFER_SIZE_OK:
 	mov EDI, OFFSET CopiedBuffer
 	inc EDI
 	COPY_BUFFER:
-		je done
+		mov BL, [EDI]
 		mov [EDX], BL
 		inc EDI
 		inc EDX
