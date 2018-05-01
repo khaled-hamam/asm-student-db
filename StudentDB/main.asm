@@ -488,7 +488,7 @@ CONTINUE:
 	call writechar
 	mov Al, [ESI]
 	call writechar
-
+	add ESI, 3
 	loop BUFFER_LOOP
 
 
