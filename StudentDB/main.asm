@@ -97,7 +97,7 @@ ENROLL:
 	mov [EDX],al
 	call enrollStudent
 
-	call printStudents 
+	; call printStudents 
 	jmp Done
 
 SAVE:
@@ -345,27 +345,37 @@ DeleteStudent ENDP
 ; Input: Student ID, Student Name, Student Grade, Student section 
 ; --------------------------------------------------------------
 enrollStudent PROC USES EDX ECX EBX ESI EAX EDI ;sId:byte, sName:byte, intGrade:byte, sectionNum:byte
-	; Validating Section Size
-	mov ESI, OFFSET buffer  
-	mov ECX, LENGTHOF buffer  ; Loop On BUFFER_SIZE
-	mov AL, RECORD_DELIMETER  ; Get NewLine Delimeter
-	; Count Number Of Students In Each Section
-GET_SECTION_STUDENT_NUMBER:
-		cmp [ESI], AL         ; Comparing Current OFFSET with the Record Del
-		je FOUND_DELIMETER    ; Jump If Delimeter Found
-		jmp CONTINUE		  
-		FOUND_DELIMETER:
-			mov BL, [ESI -1]  ; Copy the Byte Before Delimeter Which Contains Section ID
-			cmp BL, 1         ; Compare the Section ID with First Section 
-			jne SECTION_2     ; jump If Not First Section ID
-			inc section1	  ; INC section1 Counter
-			jmp CONTINUE      
-		SECTION_2:
-			inc section2      ; INC section2 Counter
-		CONTINUE:
-			inc ESI           ; INC Current OFFSET
-	loop GET_SECTION_STUDENT_NUMBER
 
+	; Validating Section Size
+	mov ECX, LENGTHOF buffer
+	mov EDI, offset buffer
+	call getLastIndex
+	cmp ESI, EDI
+	je ok
+GET_SECTION_STUDENT_NUMBER:
+	cmp ESI,EDI
+	je CALCULATE
+	add EDI, 2
+	mov AL, FIELD_DELIMETER
+	SKIP_NAME:
+		mov BL, [EDI]
+		cmp [EDI], AL
+		je CONTINUE
+		inc EDI
+	jmp SKIP_NAME
+CONTINUE:
+	add EDI,3
+	mov BL,[EDI]
+	cmp BL,1
+	jne SECTION_2
+	inc section1
+	jmp CONT
+SECTION_2:
+	inc section2
+CONT:
+	add EDI, 3
+	loop GET_SECTION_STUDENT_NUMBER
+CALCULATE:
 	mov AL, SECTIONID         ; Moving SECTIOND "INPUT"
 	mov BL, section1		  ; Moving counter Of section1 
 	cmp AL, 1				  ; Compare the SECTIONID with First Section
@@ -381,7 +391,8 @@ SEC_2:
 
 	; Getting Last Record Delimeter Index
 	mov ECX, LENGTHOF buffer
-	mov AL, RECORD_DELIMETER
+	mov AL, 13
+	mov AL, 10
 	call getLastIndex
 	mov AL, ID
 	mov [ESI], AL
@@ -419,13 +430,16 @@ SEC_2:
 	mov [ESI], AL			 ; Add SECTIONID To Buffer
 	inc ESI
 	
-	mov AL,RECORD_DELIMETER	
+	mov AL, 13
+	mov AL, 10
 	mov	[ESI],AL
 
 	jmp DONE
 	err:
 
 	DONE:
+	mov EDX, offset buffer 
+	call writestring
 	ret
 enrollStudent ENDP
 
@@ -520,20 +534,28 @@ GetAlphabeticalGrade ENDP
 ; Returns: The OFFSET in the ESI
 ; --------------------------------------------------------------
 
-getLastIndex PROC USES EDX EAX ECX
+getLastIndex PROC USES EDX EAX ECX EDI
 	mov ECX, LENGTHOF buffer
 	mov EDX, offset buffer
 	mov ESI, offset buffer
-	mov AL, RECORD_DELIMETER
 LAST_RECORD_CHECK:
-	cmp [EDX], AL  ; Comparing Current OFFSET with the Record Del.
-	jne CONT
-	mov ESI, EDX   ; IF Equal, Save the Current OFFSET to ESI
-	inc ESI		   ; INC ESI to point on the byte after the Record Del.
-	CONT:
-		inc EDX
+	mov EDI, ESI
+	mov AL, FIELD_DELIMETER
+	add ESI, 2
+SKIP_NAME:
+		cmp [ESI], AL
+		je CONTINUE
+		inc ESI
+		dec ECX
+		cmp ECX, 0
+		je RETURN
+	jmp SKIP_NAME
+CONTINUE:
+	add ESI, 6
+	sub ECX, 5
 	loop LAST_RECORD_CHECK
-	
+RETURN:
+	mov ESI, EDI
 	ret
 getLastIndex ENDP
 
