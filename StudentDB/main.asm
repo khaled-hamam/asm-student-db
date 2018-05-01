@@ -397,12 +397,15 @@ RETURN:
 	ret
 printStudents ENDP
 
+
 ; --------------------------------------------------------------
-; Function: GetAlphabeticalGrade.
-; Input: Grade as a Number 
-; Returns: Alphabetical Grade in AL
+; getAlphabeticalGrade PROC
+;
+; Matches: the student grade with the Alphabetical Grade
+; Receives:	AL = Student Numeric Grade
+; Returns: AL = Student Alphabetial Grade
 ; --------------------------------------------------------------
-GetAlphabeticalGrade PROC USES ECX EDX
+getAlphabeticalGrade PROC USES ECX EDX
 	; Number should be In EAX 
 	mov ECX,100
 	cmp EAX,ECX
@@ -431,14 +434,16 @@ GetAlphabeticalGrade PROC USES ECX EDX
 			jmp done
 	done:
 	ret
-GetAlphabeticalGrade ENDP 
+getAlphabeticalGrade ENDP 
+
 
 ; --------------------------------------------------------------
+; getLastIndex PROC
+;
 ; Gets: The last BYTE OFFSET in the Buffer
 ; Recieves: VOID
 ; Returns: The OFFSET in the ESI
 ; --------------------------------------------------------------
-
 getLastIndex PROC USES EDX EAX ECX EDI
 	mov ECX, LENGTHOF buffer
 	mov EDX, offset buffer
@@ -463,6 +468,7 @@ RETURN:
 	mov ESI, EDI
 	ret
 getLastIndex ENDP
+
 
 ; --------------------------------------------------------------
 ; saveDatabase PROC
@@ -572,7 +578,9 @@ encryptBuffer ENDP
 
 
 ; --------------------------------------------------------------
-; Sort:	Sort section IDs
+; sortIDs PROC
+;
+; Sorts: the section IDs in IDs array
 ; Recieves: ESI = OFFSET to the IDs Array
 ; Returns: VOID
 ; --------------------------------------------------------------
@@ -607,13 +615,17 @@ sortIDs PROC USES EAX ECX ESI EDI
 sortIDs ENDP
 
 
-;---------------------------------------------------------------------
-;display student's data
-;Recieves student's id in AL
-;RETURN VOID
-;---------------------------------------------------------------------
-PrintStudent PROC
-mov EBX,EAX
+; --------------------------------------------------------------
+; printStudent PROC
+;
+; Searches: the buffer for a specific student id and desplays
+;           the student data
+; Recieves: printStudentID = Student ID
+;			studentData = OFFSET to a student record array
+; Returns: studentData = the student record data
+; --------------------------------------------------------------
+printStudent PROC USES EBX EAX EDI ESI EDX ECX printStudentID: BYTE, studentData: PTR BYTE
+movzx EBX, printStudentID 
 call getLastIndex
 mov EDI, OFFSET buffer
 mov AL, FIELD_DELIMETER
@@ -621,7 +633,7 @@ mov AL, FIELD_DELIMETER
 ID_SEARCH:
 	cmp EDI, ESI		;check end of buffer
 	je ERROR
-	cmp [EDI],BL  ;compare buffer byte with id
+	cmp [EDI], BL  ;compare buffer byte with id
 	je IDFOUND
 
 	add EDI,2
@@ -676,17 +688,20 @@ IDFOUND:
 	call writeDec ;display sec id
 	call crlf
 	ret
-PrintStudent ENDP
+printStudent ENDP
 
 
-;-----------------------------------------------------------
-;takes section number, get section's studetns's id, sort them,
-;get sorted id's students from "buffer"
-;create new file, put the buffer in it
-;RECIEVES section number in eax
-;RETURNS void
-;-----------------------------------------------------------
-generateSectionReport PROC USES EDX ECX EDI EBX ESI EAX
+; --------------------------------------------------------------
+; generateSectionReport PROC
+;
+; Gets: the section's student IDs, sort them, matches the IDs
+;		with the students record, and creating a new File with the
+;       Section Data.
+; Recieves: reportSection = Section Number
+; Returns: void
+; --------------------------------------------------------------
+generateSectionReport PROC USES EDX ECX EDI EBX ESI EAX reportSection: BYTE
+movzx EAX, reportSection
 push EAX  ;store section number
 
 mov EDX, OFFSET IDs
@@ -937,12 +952,14 @@ ret
 generateSectionReport ENDP
 
 
-;TODO REPLACE PROC
-;-----------------------------------------------------------------------------------------
-;Clear the array
-;recieves array offset in EDX, lengthof array in ECX
-;return void
-;-----------------------------------------------------------------------------------------
+; --------------------------------------------------------------
+; clearArray
+;
+; Clears: the array by filling it with 0
+; Recieves: EDX = array OFFSET
+;           ECX = array Length
+; Returns: void
+; --------------------------------------------------------------
 clearArray PROC USES EAX EDX
 mov AL, 0
 clear:
@@ -954,10 +971,12 @@ clearArray ENDP
 
 
 ; --------------------------------------------------------------
+; parseNumberString PROC
+;
 ; Parse: the integer value to string Database File
 ; Recieves: ESI = OFFSET to the empty number string	
-;			EAX  = Integer Value
-; Returns: ECX = Length of the Number String
+;			EAX = Integer Value
+; Returns:  ECX = Length of the Number String
 ; --------------------------------------------------------------
 parseNumberString PROC USES ESI EAX EBX EDI EDX
 	mov ECX, 0
