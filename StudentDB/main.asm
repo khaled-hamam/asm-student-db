@@ -1026,6 +1026,7 @@ top5Students PROC USES EAX EBX ECX EDX ESI EDI studentsData: PTR BYTE
 getStudents:	
 	;Display Students from Buffer with Grades
 	mov EDX, offset Grades
+	mov ESI, studentsData
 	iterateGrades:
 		mov BL, 0
 		cmp [EDX], BL  ;check for end of Grades
@@ -1070,33 +1071,39 @@ getStudents:
 				jmp ID_SEARCH
 				IDFOUND:
 					movzx EAX, byte ptr [EDI]
-					call writeDec  ;display ID
-					mov AL," "
-					call writeChar
-					inc EDI
-					inc EDI
+					mov [ESI], EAX
+					inc ESI
+					mov AL,FIELD_DELIMETER
+					mov [ESI], AL
+					inc ESI
+					add EDI, 2
 					mov BL, FIELD_DELIMETER
 					mov ecx, BUFFER_SIZE
 					DisplayName:
 						cmp [EDI], BL
 						je END_OFNAME
 						mov AL, [EDI]
-						call writeChar
+						mov [ESI], AL
+						inc ESI
 						inc EDI
 					loop DisplayName
 					END_OFNAME:
-						mov AL," "
-						call writeChar
+						mov AL,FIELD_DELIMETER
+						mov [ESI], AL
+						inc ESI
 						inc EDI
 						movzx EAX,byte ptr [EDI]
-						call writeDec ;display grade
-						mov AL," "
-						call writeChar
-					inc EDI
-					inc EDI
+						mov [ESI], EAX ;display grade
+						mov AL,FIELD_DELIMETER
+						mov [ESI], AL
+						inc ESI
+					add EDI, 2
 					movzx EAX, byte ptr[EDI]
-					call writeDec ;display sec id
-					call crlf						
+					mov [ESI], EAX
+					inc ESI
+					mov AL, FIELD_DELIMETER
+					mov [ESI], AL
+					inc ESI
 					
 					INC EDX
 	 jmp iterateGrades
