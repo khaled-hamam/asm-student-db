@@ -709,10 +709,11 @@ printStudent ENDP
 ; Gets: the section's student IDs, sort them, matches the IDs
 ;		with the students record, and creating a new File with the
 ;       Section Data.
-; Recieves: reportSection = Section Number
+; Recieves: reportSection  = Section Number
+;			reportFileName = OFFSER to the File Name String 
 ; Returns: void
 ; --------------------------------------------------------------
-generateSectionReport PROC USES EDX ECX EDI EBX ESI EAX reportSection: BYTE
+generateSectionReport PROC USES EDX ECX EDI EBX ESI EAX reportSection: BYTE, reportFileName: PTR BYTE
 movzx EAX, reportSection
 push EAX  ;store section number
 
