@@ -39,145 +39,16 @@ SECTIONID BYTE ?
 
 .code
 
-main PROC
-RepeatChoices:
-	mov EDX,OFFSET CHOICES
-	call writeString
-	;READ CHOICE
-	call READINT
-
-	cmp EAX,1
-	je OPEN
-	cmp EAX,2
-	je ENROLL
-	cmp EAX,3
-	je SAVE
-	cmp EAX,4
-	je UPDATE
-	cmp EAX,5
-	je DELETE
-	cmp EAX,6
-	je DisplayAll
-	cmp EAX,7
-	je DisplayStudent
-	cmp EAX, 8
-	je generateReport
-	jmp Done
-
-OPEN:
-	mov EDX,OFFSET EnterKey
-	call writeString
-	call readInt
-	mov DBKEY,AL
-	mov EDX, OFFSET filename
-	call openDatabase
-	jmp Done
-
-ENROLL:
-	mov EDX,OFFSET EnterID
-	call writeString
-	call readInt
-	mov EDX, OFFSET ID
-	mov [EDX],al
-	mov EDX, offset STUDENTNAME
-	mov ECX, Lengthof STUDENTNAME
-	call clearArray
-	mov EDX,OFFSET EnterName
-	call writeString
-
-	mov EDX, OFFSET STUDENTNAME	
-	mov ECX, lengthof STUDENTNAME ;clearing name 
-	call clearArray
-
-	mov edx,offset STUDENTNAME
-	mov ecx, Lengthof STUDENTNAME
-	call readstring
-	mov EDX,OFFSET EnterGrade
-	call writeString
-	call readInt
-	mov EDX,OFFSET GRADE
-	mov [EDX],al
-	mov EDX,OFFSET EnterSec
-	call writeString
-	call readInt
-	mov EDX,OFFSET SECTIONID
-	mov [EDX],al
-	call enrollStudent
-
-	call printStudents 
-	jmp Done
-
-SAVE:
-	mov EDX,OFFSET EnterKey
-	call writeString
-	call readInt
-	mov DBKEY,AL
-	mov EDX, OFFSET filename
-	call saveDatabase
-	jmp Done 
-
-UPDATE:
-	;READ ID
-	mov EDX, OFFSET EnterID
-	call writeString
-	call ReadInt
-	mov EBX,EAX
-	;READ GRADE
-	mov EDX, OFFSET EnterGrade
-	call writeString
-	call ReadInt
-	call UpdateGrade
-	jmp Done
-
-
-Delete:
-	mov EDX, OFFSET EnterID
-	call writeString
-	call readInt
-	call DeleteStudent
-	call printStudents 
-	jmp DONE
-
-DisplayAll:
-;	call readInt
-	call printStudents 
-	jmp Done
-
-DisplayStudent:
-	mov EDX, OFFSET EnterID
-	call writeString
-	call readInt
-	call printStudent
-	jmp Done
-
-generateReport:
-	mov EDX, OFFSET EnterSecNum
-	call writeString
-	call readInt
-	call generateSectionReport
-	jmp Done
-
-Done:
-	mov EDX, OFFSET RepeatChoice
-	call writeString
-	call readChar
-	cmp AL, 'y'
-	je RepeatChoices
-	exit
-main ENDP
-
 ; --------------------------------------------------------------
 ; Opens: the DB File, Validate the DB key, Decrypt the data, 
-;	Reads the file in "buffer" array.
-; Receives:	EDX = Contains the OFFSET to the File Name String
-;			AL  = Contains the DB KEY
-; Parameters: FileName, DBKEY
+;	Reads the file into the "buffer" array.
+; Receives:	openFileName = Contains the OFFSET to the File Name String
+;			openDBKey  = Contains the DB KEY
 ; Returns: VOID
 ; --------------------------------------------------------------
-openDatabase PROC USES EDX ECX EAX EBX  ; filename:ptr byte,DBKEY: byte
-	mov DBKEY, AL
-
+openDatabase PROC USES EDX ECX EAX EBX openFileName: PTR BYTE, openDBKey: BYTE
 	; OPEN FILE
+	mov EDX, openFileName
 	call OpenInputFile
 	mov fileHandle, EAX
 
@@ -203,7 +74,7 @@ BUFFER_SIZE_OK:
 	mov CopiedBuffer[EAX], 0    ; Adding Null Terminator
 
 	; validate DB KEY	
-	mov BL, DBKEY
+	mov BL, openDBKey
 	cmp CopiedBuffer[0], BL     ; Comparing The First Byte with the Given Key
 	jne ERROR_FOUND		  ; Keys Don't Match
 
@@ -224,11 +95,11 @@ inc EDX
 loop COPY_BUFFER
 done:
 ; Decrypt the buffer
-	mov ECX, EAX		  ; Moving File Size to ECX
+	mov ECX, EAX		      ; Moving File Size to ECX
 	;dec ECX				  ; Decrementing ECX to Avoid the DBKEY
 	mov EDX, OFFSET buffer
 	;inc EDX				  ; Incrementing EDX to Avoid the DBKEY
-	mov AL, DBKey
+	mov AL, openDBKey
 
 	; TODO: Shift 1 to remove DB KEY
 
@@ -261,10 +132,10 @@ openDatabase ENDP
 
 
 ;---------------------------------------------------------------
-; Finds: Student by ID, and Update th grade
+; Finds: Student by ID, and Update the grade
 ; Recieves: EBX = Student ID 
 ;			EAX = New Grade
-; Parameters: ID,GRADE
+; Parameters: ID, GRADE
 ; Returns: VOID
 ;---------------------------------------------------------------
 updateGrade PROC
@@ -319,12 +190,13 @@ END_OF_FILE:  ;Break the Loop
 
 	ret
 updateGrade ENDP
+
+
 ;--------------------------------------------------------------
 ;receives ID IN AL
 ;PUTS '*' in the first byte in the record
 ;returns VOID
 ;--------------------------------------------------------------
-
 DeleteStudent PROC USES EAX EBX EDI ECX ESI
 ;recieves ID in AL
 mov EBX,EAX
@@ -364,12 +236,19 @@ DONE:
 	ret
 DeleteStudent ENDP
 
-; --------------------------------------------------------------
-; Function: Enroll a Student.
-; Input: Student ID, Student Name, Student Grade, Student section 
-; --------------------------------------------------------------
-enrollStudent PROC USES EDX ECX EBX ESI EAX EDI ;sId:byte, sName:byte, intGrade:byte, sectionNum:byte
 
+; --------------------------------------------------------------
+; EnrollStudent PROC
+;
+; Add: the new student record to the buffer string
+; Receives:	enrollID = Student ID
+;			enrollName = Student Name String
+;			enrollNameSize = Length of Student Name String
+;			enroll Grade = Student Grade
+;			enrollSection = Student Section
+; Returns: VOID
+; --------------------------------------------------------------
+enrollStudent PROC USES EDX ECX EBX ESI EAX EDI enrollID: BYTE, enrollName: PTR BYTE, enrollNameSize: BYTE, enrollGrade: BYTE, enrollSection: BYTE
 	; Validating Section Size
 	mov ECX, LENGTHOF buffer
 	mov EDI, offset buffer
@@ -377,7 +256,7 @@ enrollStudent PROC USES EDX ECX EBX ESI EAX EDI ;sId:byte, sName:byte, intGrade:
 	cmp ESI, EDI
 	je ok
 GET_SECTION_STUDENT_NUMBER:
-	cmp ESI,EDI
+	cmp ESI, EDI
 	je CALCULATE
 	add EDI, 2
 	mov AL, FIELD_DELIMETER
@@ -388,9 +267,9 @@ GET_SECTION_STUDENT_NUMBER:
 		inc EDI
 	jmp SKIP_NAME
 CONTINUE:
-	add EDI,3
-	mov BL,[EDI]
-	cmp BL,1
+	add EDI, 3
+	mov BL, [EDI]
+	cmp BL, 1
 	jne SECTION_2
 	inc section1
 	jmp CONT
@@ -400,7 +279,7 @@ CONT:
 	add EDI, 3
 	loop GET_SECTION_STUDENT_NUMBER
 CALCULATE:
-	mov AL, SECTIONID         ; Moving SECTIOND "INPUT"
+	mov AL, enrollSection     ; Moving Section Number "INPUT"
 	mov BL, section1		  ; Moving counter Of section1 
 	cmp AL, 1				  ; Compare the SECTIONID with First Section
 	jne SEC_2				  ; jump IF SECTIONID Not First Section
@@ -415,15 +294,16 @@ SEC_2:
 
 	mov ECX, LENGTHOF buffer
 	call getLastIndex
-	mov AL, ID
+	mov AL, enrollID
 	mov [ESI], AL
 	inc ESI
 	mov AL, FIELD_DELIMETER
 	mov [ESI], AL
 	inc ESI
-	mov EDI, offset STUDENTNAME
+	mov EDI, enrollName
 	mov BL, 0
-	mov ECX, Lengthof STUDENTNAME
+	; TODO: Fixing the Length of enrollName
+	movzx ECX, enrollNameSize
 	l:
 		mov AL, [EDI]
 		cmp [EDI], BL
@@ -439,7 +319,7 @@ SEC_2:
 	mov [ESI], AL			 ; Add FIELD_DELIMETER To Buffer
 	inc ESI					 ; INC ESI To point To Byte After Delimeter
 	
-	mov AL, GRADE			 ; Copy GRADE
+	mov AL, enrollGrade		 ; Copy GRADE
 	mov [ESI], AL			 ; Add GRADE To Buffer
 	inc ESI					 ; INC ESI To point To Byte After GRADE 
 	
@@ -447,7 +327,7 @@ SEC_2:
 	mov [ESI], AL			 ; Add FIELD_DELIMETER To Buffer
 	inc ESI					 ; INC ESI To point To Byte After Delimeter
 	
-	mov AL, SECTIONID		 ; Copy SECTIONID 
+	mov AL, enrollSection	 ; Copy SECTIONID 
 	mov [ESI], AL			 ; Add SECTIONID To Buffer
 	inc ESI
 	
@@ -466,6 +346,10 @@ SEC_2:
 	ret
 enrollStudent ENDP
 
+
+;---------------------
+; printStudents PROC
+;---------------------
 printStudents PROC
 	call getLastIndex
 	mov EDI, ESI
@@ -579,14 +463,17 @@ RETURN:
 getLastIndex ENDP
 
 ; --------------------------------------------------------------
+; saveDatabase PROC
+;
 ; Saves: the Database File
-; Recieves: EDX = OFFSET to the File Name String	
-;			AL  = Database Key
+; Recieves: saveFileName = OFFSET to the File Name String	
+;			saveDBKey  = Database Key
 ; Returns: VOID
 ; --------------------------------------------------------------
-saveDatabase PROC USES EAX EBX ECX EDX ESI EDI
+saveDatabase PROC USES EAX EBX ECX EDX ESI EDI saveFileName: PTR BYTE, saveDBKey: BYTE
 	; Creating the DB File
-	mov BL, AL  ; Saving the DB KEY Value in BL
+	mov BL, saveDBKey  ; Saving the DB KEY Value in BL
+	mov EDX, saveFileName
 	call CreateOutputFile
 
 	; Checking for File Handle Errors
@@ -635,6 +522,8 @@ saveDatabase ENDP
 
 
 ; --------------------------------------------------------------
+; encryptBuffer PROC
+;
 ; Copies: the input Array to the Output Array
 ; Recieves: ESI = OFFSET to the Input Array
 ;			EDI = OFFSET to the Output Array
@@ -678,6 +567,8 @@ COPY_LOOP:
 RETURN:
 	ret
 encryptBuffer ENDP
+
+
 ; --------------------------------------------------------------
 ; Sort:	Sort section IDs
 ; Recieves: ESI = OFFSET to the IDs Array
@@ -712,6 +603,8 @@ sortIDs PROC USES EAX ECX ESI EDI
 	
 	ret 
 sortIDs ENDP
+
+
 ;---------------------------------------------------------------------
 ;display student's data
 ;Recieves student's id in AL
@@ -1111,6 +1004,4 @@ DllMain PROC hInstance:DWORD, fdwReason:DWORD, lpReserved:DWORD
 mov eax, 1		; Return true to caller. 
 ret 				
 DllMain ENDP
-
-END main	   ; For Running EXE
-; END DllMain  ; For Exporting a DLL
+END DllMain  ; For Exporting a DLL
