@@ -104,7 +104,7 @@ ENROLL:
 	mov [EDX],al
 	call enrollStudent
 
-	 call printStudents 
+	call printStudents 
 	jmp Done
 
 SAVE:
@@ -476,8 +476,9 @@ printStudents PROC
 BUFFER_LOOP:
 		cmp ESI, EDI
 		je RETURN
+		mov EAX, 0
 		mov Al, [ESI]
-		call writechar
+		call writeDec
 		add ESI, 2
 		mov BL, FIELD_DELIMETER
 		mov Al,' '
@@ -494,13 +495,14 @@ CONTINUE:
 	mov Al,' '
 	call writechar
 	mov Al, [ESI]
-	call writechar
+	call writeDec
 
 	add ESI, 2
 	mov Al,' '
 	call writechar
 	mov Al, [ESI]
-	call writechar
+	call writeDec
+	call CRLF
 	add ESI, 3
 	loop BUFFER_LOOP
 
