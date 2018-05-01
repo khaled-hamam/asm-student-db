@@ -400,10 +400,7 @@ SEC_2:
 	ja err					  ; Jump error IF Second Section Counter Greater Than Max Students/Section
 	OK:
 
-	; Getting Last Record Delimeter Index
 	mov ECX, LENGTHOF buffer
-	mov AL, 13
-	mov AL, 10
 	call getLastIndex
 	mov AL, ID
 	mov [ESI], AL
@@ -442,6 +439,8 @@ SEC_2:
 	inc ESI
 	
 	mov AL, 13
+	mov [ESI], AL
+	inc ESI
 	mov AL, 10
 	mov	[ESI],AL
 
@@ -459,44 +458,11 @@ printStudents PROC
 	mov EDI, ESI
 	mov ESI, OFFSET buffer
 	mov ECX, LENGTHOF buffer
-
 BUFFER_LOOP:
-	movzx EAX, BYTE PTR [ESI]
-	call writeDec
-	add ESI, 2
-	mov Al,' '
-	call writeChar
+	
 
-	mov BL, FIELD_DELIMETER
-	PRINT_NAME:
-		cmp [ESI], BL
-		je SECTION_GRADE
-		mov AL, [ESI]
-		call writeChar
-		inc ESI
-		loop PRINT_NAME
-
-	SECTION_GRADE:
-		inc ESI
-		mov AL,' '
-		call writeChar
-		movzx EAX, BYTE PTR [ESI]
-		call writeDec
-		add ESI, 2
-		mov AL,' '
-		call writeChar
-
-		movzx EAX, BYTE PTR [ESI]
-		call writeDec
-		add ESI, 2
-		mov AL,' '
-		call writeChar
-
-		mov AL,10
-		call writeChar
-		cmp ESI, EDI
-		je RETURN
 	loop BUFFER_LOOP
+
 
 RETURN:
 	ret
