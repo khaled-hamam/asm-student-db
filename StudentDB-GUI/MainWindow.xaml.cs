@@ -70,60 +70,183 @@ namespace StudentDB_GUI
         }
 
         public void Enroll(object sender, RoutedEventArgs e)
-        { 
-            int ID = int.Parse(StudentIDTextBox.Text);
-            string name = StudentNameTextBox.Text;
-            int grade = int.Parse(StudentGradeTextBox.Text);
-            int section = int.Parse(StudentSectionComboBox.Text);
-
-            AssemblyStudentDB.enrollStudent((char)ID, name, (char)name.Length, (char)grade, (char)section);
-            RefreshList();
+        {
+            StudentIDTextBox.Text = (StudentIDTextBox != null) ? StudentIDTextBox.Text.Trim() : "";
+            StudentNameTextBox.Text = (StudentNameTextBox != null) ? StudentNameTextBox.Text.Trim() : "";
+            StudentGradeTextBox.Text = (StudentGradeTextBox != null) ? StudentGradeTextBox.Text.Trim() : "";
+            StudentSectionComboBox.Text = (StudentSectionComboBox != null) ? StudentSectionComboBox.Text.Trim() : "";
+            if (StudentIDTextBox.Text != "" && StudentNameTextBox.Text != "" && StudentGradeTextBox.Text != "" && StudentSectionComboBox.Text != "")
+            {
+                int ID = int.Parse(StudentIDTextBox.Text);
+                string name = StudentNameTextBox.Text;
+                int grade = int.Parse(StudentGradeTextBox.Text);
+                int section = int.Parse(StudentSectionComboBox.Text);
+                if (ID > 0 && ID < 256 && grade <= 100 && grade >= 0)
+                {
+                    try
+                    {
+                        AssemblyStudentDB.enrollStudent((char)ID, name, (char)name.Length, (char)grade, (char)section);
+                    }
+                    catch
+                    {
+                        Console.WriteLine("Error in enrollStudent");
+                    }
+                    RefreshList();
+                }
+                else
+                    MessageBox.Show("Enter Valid Number between 1 and 255 ");
+            }
+            else
+                MessageBox.Show("No empty Values");
+            StudentIDTextBox.Clear();
+            StudentNameTextBox.Clear();
+            StudentGradeTextBox.Clear();
+            StudentSectionComboBox.SelectedIndex = -1;
         }
 
         public void Delete(object sender, RoutedEventArgs e)
         {
-            int ID = int.Parse(DeleteStudentIDTextBox.Text);
-
-            AssemblyStudentDB.deleteStudent((char)ID);
+            DeleteStudentIDTextBox.Text = (DeleteStudentIDTextBox != null) ? DeleteStudentIDTextBox.Text.Trim() : "";
+            if (DeleteStudentIDTextBox.Text != "")
+            {
+                int ID = int.Parse(DeleteStudentIDTextBox.Text);
+                if (ID > 0 && ID < 256)
+                {
+                    try
+                    {
+                        AssemblyStudentDB.deleteStudent((char)ID);
+                    }
+                    catch
+                    {
+                        Console.WriteLine("Error in deleteStudent");
+                    }
+                }
+            else
+                MessageBox.Show("Enter Valid Number between 1 and 255");
+            }
+            else
+                MessageBox.Show("No Empty Values");
+            DeleteStudentIDTextBox.Clear();
         }
+
 
         public void Save(object sender, RoutedEventArgs e)
         {
-            int key = int.Parse(SaveDBKeyTextBox.Text);
-
-            AssemblyStudentDB.saveDatabase("database.txt", (char)key);
-            RefreshList();
+            SaveDBKeyTextBox.Text = (SaveDBKeyTextBox != null) ? SaveDBKeyTextBox.Text.Trim() : "";
+            if (SaveDBKeyTextBox.Text != "")
+            {
+                int key = int.Parse(SaveDBKeyTextBox.Text);
+                if (key > 0 && key < 256)
+                {
+                    try
+                    {
+                        AssemblyStudentDB.saveDatabase("database.txt", (char)key);
+                    }
+                    catch
+                    {
+                        Console.WriteLine("Error in saveDatabase");
+                    }
+                    RefreshList();
+                }
+                else
+                    MessageBox.Show("Enter Valid Number between 1 and 255");
+            }
+            else
+                MessageBox.Show("No empty Values");
+            SaveDBKeyTextBox.Clear();
         }
 
         public void Update(object sender, RoutedEventArgs e)
         {
-            int ID = int.Parse(StudentUpdateIDTextBox.Text);
-            int grade = int.Parse(StudentUpdateGradeTextBox.Text);
+            StudentUpdateIDTextBox.Text = (StudentUpdateIDTextBox != null) ? StudentUpdateIDTextBox.Text.Trim() : "";
+            StudentUpdateGradeTextBox.Text = (StudentUpdateGradeTextBox != null) ? StudentUpdateGradeTextBox.Text.Trim() : "";
 
-            AssemblyStudentDB.updateGrade((char)ID, (char)grade);
-            RefreshList();
+            if (StudentUpdateIDTextBox.Text != "" && StudentUpdateGradeTextBox.Text != "")
+            {
+                int ID = int.Parse(StudentUpdateIDTextBox.Text);
+                int grade = int.Parse(StudentUpdateGradeTextBox.Text);
+                if (ID > 0 && ID < 256 && grade <= 100 && grade >= 0)
+                {
+                    try
+                    {
+                        AssemblyStudentDB.updateGrade((char)ID, (char)grade);
+                    }
+                    catch
+                    {
+                        Console.WriteLine("Error in updateGrade");
+                    }
+                  
+                    RefreshList();
+                }
+                else
+                    MessageBox.Show("Enter Valid Number between 1 and 255");
+                StudentUpdateGradeTextBox.Clear();
+                StudentUpdateIDTextBox.Clear();
+            }
+            else
+                MessageBox.Show("No empty values");
         }
 
         public void Open(object sender, RoutedEventArgs e)
         {
-            int key = int.Parse(StudentDBKeyTextBox.Text);
+            StudentDBKeyTextBox.Text = (StudentDBKeyTextBox != null) ? StudentDBKeyTextBox.Text.Trim() : "";
+            if (StudentDBKeyTextBox.Text != "")
+            {
+                int key = int.Parse(StudentDBKeyTextBox.Text);
+                if (key > 0 && key < 256)
+                {
+                    try
+                    {
+                        AssemblyStudentDB.openDatabase("database.txt", (char)key);
+                    }
+                    catch
+                    {
+                        Console.WriteLine("Error in openDatabase");
+                    }
+                   
+                    RefreshList();
+                }
+                else
+                    MessageBox.Show(" Enter Valid Number between 1 and 255");
+            }
+            else
+                MessageBox.Show("No empty values");
+            StudentDBKeyTextBox.Clear();
 
-            AssemblyStudentDB.openDatabase("database.txt", (char)key);
-            RefreshList();
         }
 
         public void GenerateSection(object sender, RoutedEventArgs e)
         {
-            int section = int.Parse(GenerateSectionComboBox.Text);
-
-            AssemblyStudentDB.generateSectionReport((char)section, $"Section{section}_Report.txt");
+            GenerateSectionComboBox.Text = (GenerateSectionComboBox != null) ? GenerateSectionComboBox.Text.Trim() : "";
+            if (GenerateSectionComboBox.Text != "")
+            {
+                int section = int.Parse(GenerateSectionComboBox.Text);
+                try
+                {
+                AssemblyStudentDB.generateSectionReport((char)section, $"Section{section}_Report.txt");
+                }
+                catch
+                {
+                    Console.WriteLine("Error in generateSectionReport");
+                }
+            }
+            else
+                MessageBox.Show("No empty Values");
+            GenerateSectionComboBox.SelectedIndex = -1;
         }
 
         private void Top5(object sender, RoutedEventArgs e)
         {
             char[] studentRecords = new char[1024];
-
-            AssemblyStudentDB.top5Students(studentRecords);
+            try
+            {
+                AssemblyStudentDB.top5Students(studentRecords);
+            }
+            catch
+            {
+                Console.WriteLine("Error in top5Students");
+            }
+           
 
             string records = new string(studentRecords);
             string[] splitRecords = records.Split('/');
