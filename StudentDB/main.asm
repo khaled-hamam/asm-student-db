@@ -661,6 +661,7 @@ IDFOUND:
 		mov AL," "
 		mov [EDX], AL
 		inc EDX
+		inc EDI
 
 	movzx EAX, byte ptr [EDI]
 	mov ESI, OFFSET convertedNum
