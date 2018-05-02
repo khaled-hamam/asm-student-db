@@ -164,7 +164,7 @@ main ENDP
 openDatabase PROC USES EDX ECX EAX EBX  ; filename:ptr byte,DBKEY: byte
 	mov DBKEY, AL
 
-	; OPEN FILE
+	; OPEN FILE 
 	call OpenInputFile
 	mov fileHandle, EAX
 
