@@ -378,7 +378,7 @@ CONTINUE:
 	mov [EDX], BL
 	inc EDX
  
-	mov AL, [ESI]	;mov Grade
+	movzx EAX, byte ptr [ESI]	;mov Grade
 	mov [EDX], AL
 	inc EDX
 	add ESI, 2	
@@ -386,7 +386,15 @@ CONTINUE:
 	;mov Delimeter
 	mov [EDX], BL
 	inc EDX
- 
+	
+	call getAlphabeticalGrade
+	mov [EDX], AL ;mov alphabetic grade
+	inc EDX
+
+	;mov Delimeter
+	mov [EDX], BL
+	inc EDX
+
 	mov Al, [ESI]	;mov Section Number
 	mov [EDX], AL
 	inc EDX
@@ -686,6 +694,7 @@ IDFOUND:
 		inc EDI
 
 	movzx EAX, byte ptr [EDI]
+	push EAX
 	mov ESI, OFFSET convertedNum
 	call parseNumberString
 
@@ -695,6 +704,15 @@ IDFOUND:
 			inc ESI
 			inc EDX
 	loop copyGrade
+
+		mov AL," "
+		mov [EDX], AL	
+		inc EDX
+		
+		pop EAX
+		call getAlphabeticalGrade
+		mov [EDX], AL
+		inc EDX
 
 		mov AL," "
 		mov [EDX], AL	
@@ -1184,13 +1202,25 @@ getStudents:
 						mov [ESI], AL
 						inc ESI
 						inc EDI
+
 						movzx EAX,byte ptr [EDI]
-						mov [ESI], EAX ;display grade
+						mov [ESI], EAX		;display grade
 						inc ESI
+
+						mov AL, FIELD_DELIMETER
+						mov [ESI], AL
+						inc ESI
+
+						movzx EAX,byte ptr [EDI]
+						call getAlphabeticalGrade
+						mov [ESI], EAX
+						inc ESI
+
 						mov AL, FIELD_DELIMETER
 						mov [ESI], AL
 						inc ESI
 					add EDI, 2
+
 					movzx EAX, byte ptr[EDI]
 					mov [ESI], EAX
 					inc ESI
