@@ -7,24 +7,34 @@
         xmlns:local="clr-namespace:StudentDB_GUI"
         xmlns:system="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525" MaxHeight="350" MaxWidth="525">
+        Title="MainWindow" Height="600" Width="800">
     <Grid Background="#ecf0f1">
         <materialDesign:DialogHost  Name="RootDialog"  Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition />
                     <ColumnDefinition />
+                    <ColumnDefinition />
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="50"/>
-                    <RowDefinition Height="50"/>
-                    <RowDefinition Height="50"/>
-                    <RowDefinition Height="50"/>
-                    <RowDefinition Height="50"/>
-                    <RowDefinition Height="50"/>
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
                 </Grid.RowDefinitions>
-                <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.ColumnSpan="2" Background="White">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="125 10 0 0">
+                
+                <!--#region Search Bar -->
+                <Grid Grid.Row="0" Grid.ColumnSpan="3" Background="White">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <TextBox Grid.Column="0" 
                          materialDesign:HintAssist.Hint="Search For Student" 
                          materialDesign:HintAssist.HintOpacity="0.4"
@@ -36,14 +46,17 @@
                             <materialDesign:PackIcon Kind="Magnify" Opacity=".56" />
                         </Button>
                     </StackPanel>
-                </StackPanel>
-                <StackPanel Grid.Row="1">
+                </Grid>
+                <!--#endregion-->
+                
+                <!--#region Buttons -->
+                <StackPanel VerticalAlignment="Center" Grid.Column="2" Grid.Row="3">
                     <Button   
             Command="{x:Static materialDesign:DialogHost.OpenDialogCommand}"
             Style="{StaticResource MaterialDesignRaisedButton}"
             VerticalAlignment="Center"
             Width="140"
-            Margin="0 15 0 0">
+            Margin="0 0 0 0">
                         <Button.CommandParameter>
                             <StackPanel>
                                 <StackPanel Margin="16">
@@ -83,13 +96,12 @@
                         Enroll Student
                     </Button>
                 </StackPanel>
-                <StackPanel Grid.Row="2">
+                <StackPanel VerticalAlignment="Center" Grid.Column="2" Grid.Row="5">
                     <Button    
          Command="{x:Static materialDesign:DialogHost.OpenDialogCommand}"
         Style="{StaticResource MaterialDesignRaisedButton}"
         VerticalAlignment="Center"
-         Width="140"
-         Margin="0 15 0 0">
+         Width="140">
                         <Button.CommandParameter>
                             <StackPanel>
                                 <StackPanel Margin="16">
@@ -122,13 +134,12 @@
                         Delete Student
                     </Button>
                 </StackPanel>
-                <StackPanel Grid.Row="3">
+                <StackPanel VerticalAlignment="Center" Grid.Column="2" Grid.Row="2">
                     <Button 
          Command="{x:Static materialDesign:DialogHost.OpenDialogCommand}"
         Style="{StaticResource MaterialDesignRaisedButton}"
         VerticalAlignment="Center"
-         Width="140"
-         Margin="0 15 0 0" >
+         Width="140" >
                         <Button.CommandParameter>
                             <StackPanel>
                                 <StackPanel Margin="16">
@@ -158,16 +169,15 @@
                                 </StackPanel>
                             </StackPanel>
                         </Button.CommandParameter>
-                        Sava DataBase
+                        Save Database
                     </Button>
                 </StackPanel>
-                <StackPanel Grid.Row="4">
+                <StackPanel VerticalAlignment="Center" Grid.Column="2" Grid.Row="4">
                     <Button    
          Command="{x:Static materialDesign:DialogHost.OpenDialogCommand}"
         Style="{StaticResource MaterialDesignRaisedButton}"
         VerticalAlignment="Center"
-         Width="140"
-         Margin="0 15 0 0">
+         Width="140">
                         <Button.CommandParameter>
                             <StackPanel>
                                 <StackPanel Margin="16">
@@ -201,13 +211,12 @@
                         Update Student
                     </Button>
                 </StackPanel>
-                <StackPanel Grid.Row="1" Grid.Column="1">
+                <StackPanel VerticalAlignment="Center" Grid.Row="1" Grid.Column="2">
                     <Button    
         Command="{x:Static materialDesign:DialogHost.OpenDialogCommand}"
         Style="{StaticResource MaterialDesignRaisedButton}"
         VerticalAlignment="Center"
-         Width="140" 
-         Margin="0 15 0 0" >
+         Width="140" >
                         <Button.CommandParameter>
                             <StackPanel>
                                 <StackPanel Margin="16">
@@ -237,26 +246,24 @@
                                 </StackPanel>
                             </StackPanel>
                         </Button.CommandParameter>
-                        Open DataBase
+                        Open Database
                     </Button>
                 </StackPanel>
-                <StackPanel Grid.Row="2" Grid.Column="1">
+                <StackPanel VerticalAlignment="Center" Grid.Row="7" Grid.Column="2">
                     <Button    
         Style="{StaticResource MaterialDesignRaisedButton}"
         VerticalAlignment="Center"
          Width="140" 
-         Click="Top5"
-         Margin="0 15 0 0" >
+         Click="Top5" >
                         Top 5 Students
                     </Button>
                 </StackPanel>
-                <StackPanel Grid.Row="3" Grid.Column="1">
+                <StackPanel VerticalAlignment="Center" Grid.Row="6" Grid.Column="2">
                     <Button    
         Command="{x:Static materialDesign:DialogHost.OpenDialogCommand}"
         Style="{StaticResource MaterialDesignRaisedButton}"
         VerticalAlignment="Center"
-         Width="140" 
-         Margin="0 15 0 0" >
+         Width="140" >
                         <Button.CommandParameter>
                             <StackPanel>
                                 <StackPanel Margin="16">
@@ -296,6 +303,11 @@
                         Generate Section
                     </Button>
                 </StackPanel>
+                <!--#endregion-->
+
+                <ListView Name="StudentsListView" Grid.Row="1" Grid.RowSpan="7" Grid.ColumnSpan="2">
+                    
+                </ListView>
             </Grid>
         </materialDesign:DialogHost>
     </Grid>
