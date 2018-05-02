@@ -1,5 +1,4 @@
 include irvine32.inc
-
 ; CONSTANTS
 BUFFER_SIZE = 1024
 FIELD_DELIMETER = '/'
@@ -30,15 +29,11 @@ successString BYTE "Saving Completed.", 0
 Grades BYTE 21 DUP(?), 0
 section1 BYTE 0
 section2 BYTE 0
-
-
 ID BYTE ?
 GRADE BYTE ?
 STUDENTNAME BYTE 100 DUP(?)
 SECTIONID BYTE ?
-
 .code
-
 ; --------------------------------------------------------------
 ; Opens: the DB File, Validate the DB key, Decrypt the data, 
 ;	Reads the file into the "buffer" array.
@@ -51,7 +46,6 @@ openDatabase PROC USES EDX ECX EAX EBX openFileName: PTR BYTE, openDBKey: BYTE
 	mov EDX, openFileName
 	call OpenInputFile
 	mov fileHandle, EAX
-
 	; check for errors
 	cmp EAX, INVALID_HANDLE_VALUE
 	jne FILE_OK
@@ -64,22 +58,17 @@ FILE_OK:
 	call ReadFromFile
 	jnc CHECK_BUFFER_SIZE  ; Checking Reading Errors
 	jmp ERROR_FOUND		   ; Error Found
-
 CHECK_BUFFER_SIZE:
 	cmp EAX, LENGTHOF CopiedBuffer  ; Check if buffer is large enough
 	jg ERROR_FOUND			  ; Buffer is too small for the file
 	jmp BUFFER_SIZE_OK		  
-
 BUFFER_SIZE_OK:
 	mov CopiedBuffer[EAX], 0    ; Adding Null Terminator
-
 	; validate DB KEY	
 	mov BL, openDBKey
 	cmp CopiedBuffer[0], BL     ; Comparing The First Byte with the Given Key
 	jne ERROR_FOUND		  ; Keys Don't Match
-
 ;copy the copied buffer to the buffer without the dbkey
-
 	mov ECX, EAX
 	dec ECX	
 	mov EDX, OFFSET buffer
@@ -98,9 +87,7 @@ done:
 	mov EDX, OFFSET buffer
 	;inc EDX				  ; Incrementing EDX to Avoid the DBKEY
 	mov AL, openDBKey
-
 	; TODO: Shift 1 to remove DB KEY
-
 DECRYPT:
 		xor [EDX], AL	  ; XORING Every BYTE with the DBKEY
 		mov BL, [EDX]
@@ -111,13 +98,11 @@ DECRYPT:
 	call crlf
 	mov EAX, fileHandle
 	call CloseFile
-
 	; mov EDX, OFFSET buffer
 	; call writeString
 	; call CRLF
 	; TODO: Removing the First Byte from buffer
 	ret
-
 ERROR_FOUND:
 	mov EAX, fileHandle
 	call closeFile
@@ -127,8 +112,6 @@ ERROR_FOUND:
 	call CRLF
 	ret
 openDatabase ENDP
-
-
 ;---------------------------------------------------------------
 ; updateGrade PROC
 ;
@@ -139,29 +122,24 @@ openDatabase ENDP
 ;---------------------------------------------------------------
 updateGrade PROC USES EBX EAX EDX ECX ESI updateStudentID: BYTE, updateStudentGrade: BYTE
 	movzx EBX, updateStudentID
-
 	mov EDX, OFFSET buffer
 	call getLastIndex
 	push EAX
 	mov AL, FIELD_DELIMETER
-
 SEARCH_ID:
 	cmp EDX, ESI
 	je ERROR_FOUND
 	cmp [EDX], BL
 	je ID_FOUND	
 	add EDX, 2	;skip ID
-
 	skipName:
 		cmp [EDX], AL  ;CHECK end of name
 		je CONTINUE 
 		inc EDX
 	jmp skipName
-
 	CONTINUE:
 		add EDX, 6
 jmp SEARCH_ID
-
 ERROR_FOUND:
 	; ERROR ID IS NOT FOUND
 	mov EDX, OFFSET errorString 
@@ -169,7 +147,6 @@ ERROR_FOUND:
 	call crlf
 	pop EAX
 	jmp END_OF_FILE
-
 ID_FOUND:
 	pop EAX
 	inc EDX  ; Skip ID Byte
@@ -185,24 +162,19 @@ NAME_LOOP:
 	je END_OF_NAME  ; DELIMETER is FOUND, End of NAME Bytes
 	inc EDX
 	loop NAME_LOOP
-
 	; ERROR FOUND
 	mov EDX, OFFSET errorString 
 	call writeString
 	call crlf
 	jmp END_OF_FILE
-
 END_OF_NAME:
 	inc EDX
 	mov AL, updateStudentGrade
 	mov [EDX], AL
 	; MOV GRADE
-
 END_OF_FILE:  ;Break the Loop
 	ret
 updateGrade ENDP
-
-
 ;---------------------------------------------------------------
 ; deleteStudent PROC
 ;
@@ -216,7 +188,6 @@ movzx EBX, deleteID
 call getLastIndex
 mov EDI, OFFSET buffer
 mov AL, FIELD_DELIMETER
-
 delete:
 	cmp EDI, ESI	;check end of buffer
 	je ERROR
@@ -233,23 +204,18 @@ delete:
 	CONTINUE:
 		add EDI, 6
 	jmp delete
-
 ;ERROR OCCURED
 ERROR:
 mov EDX,OFFSET errorString
 call writeString
 jmp DONE
-
 ;MOVE IN ID *
 IDFOUND:
 	mov AL,'*'
 	mov [EDI], AL
-
 DONE:
 	ret
 deleteStudent ENDP
-
-
 ; --------------------------------------------------------------
 ; EnrollStudent PROC
 ;
@@ -304,7 +270,6 @@ SEC_2:
 	cmp BL,20				  ; Compare second Section with Max Students/Section
 	ja err					  ; Jump error IF Second Section Counter Greater Than Max Students/Section
 	OK:
-
 	mov ECX, LENGTHOF buffer
 	call getLastIndex
 	mov AL, enrollID
@@ -349,17 +314,13 @@ SEC_2:
 	inc ESI
 	mov AL, 10
 	mov	[ESI],AL
-
 	jmp DONE
 	err:
-
 	DONE:
 	mov EDX, offset buffer 
 	call writestring
 	ret
 enrollStudent ENDP
-
-
 ;---------------------
 ; printStudents PROC
 ;---------------------
@@ -393,7 +354,6 @@ CONTINUE:
 	call writechar
 	mov Al, [ESI]
 	call writeDec
-
 	add ESI, 2
 	mov Al,' '
 	call writechar
@@ -402,13 +362,9 @@ CONTINUE:
 	call CRLF
 	add ESI, 3
 	loop BUFFER_LOOP
-
-
 RETURN:
 	ret
 printStudents ENDP
-
-
 ; --------------------------------------------------------------
 ; getAlphabeticalGrade PROC
 ;
@@ -446,8 +402,6 @@ getAlphabeticalGrade PROC USES ECX EDX
 	done:
 	ret
 getAlphabeticalGrade ENDP 
-
-
 ; --------------------------------------------------------------
 ; getLastIndex PROC
 ;
@@ -479,8 +433,6 @@ RETURN:
 	mov ESI, EDI
 	ret
 getLastIndex ENDP
-
-
 ; --------------------------------------------------------------
 ; saveDatabase PROC
 ;
@@ -494,7 +446,6 @@ saveDatabase PROC USES EAX EBX ECX EDX ESI EDI saveFileName: PTR BYTE, saveDBKey
 	mov BL, saveDBKey  ; Saving the DB KEY Value in BL
 	mov EDX, saveFileName
 	call CreateOutputFile
-
 	; Checking for File Handle Errors
 	cmp EAX, INVALID_HANDLE_VALUE
 	jne ENCRYPT_STRING  ; No Error Found
@@ -502,7 +453,6 @@ saveDatabase PROC USES EAX EBX ECX EDX ESI EDI saveFileName: PTR BYTE, saveDBKey
 	call writeString
 	call CRLF
 	ret					; Error Found
-
 ENCRYPT_STRING:
 	push EAX  ; Saving File Handle Value
 	mov ESI, OFFSET buffer
@@ -512,7 +462,6 @@ ENCRYPT_STRING:
 	mov [EDI], BL  ; Copying the DB KEY to the First Byte
 	inc EDI
 	call encryptBuffer  ; Copying Valid Records and XORing each Byte with the Key
-
 	; Writing the DB Key String to the Database File
 	pop EAX		  ; Retrieving File Handle
 	mov EDX, OFFSET encryptedBuffer
@@ -523,7 +472,6 @@ ENCRYPT_STRING:
 	pop EAX		  ; Retrieving File Handle
 	call closeFile
 	mov EAX, EBX  ; Retrieving EAX Value (Number of Bytes Written in File)
-
 	; Checking Write Errors
 	cmp EAX, LENGTHOF encryptedBuffer
 	je DONE_SAVING  ; EAX == LENGTHOF buffer (NO ERROR)
@@ -538,8 +486,6 @@ DONE_SAVING:
 	call CRLF
 	ret
 saveDatabase ENDP
-
-
 ; --------------------------------------------------------------
 ; encryptBuffer PROC
 ;
@@ -551,7 +497,6 @@ saveDatabase ENDP
 ; Returns: VOID
 ; --------------------------------------------------------------
 encryptBuffer PROC USES ESI EDI	ECX	EAX EBX
-
 COPY_LOOP:
 	mov BL, '*'  ; Checking for a Deleted Record
 	cmp [ESI], BL
@@ -562,7 +507,6 @@ COPY_LOOP:
 	xor [EDI], AL
 	inc EDI  ; Incrementing the encryptedBuffer OFFSET
 	jmp CONTINUE
-
 	SKIP_RECORD:
 		add ESI, 2
 		SKIP_NAME:
@@ -576,7 +520,6 @@ COPY_LOOP:
 	CONTINUE_SKIP:
 		add ESI, 5
 		sub ECX, 5
-
 	CONTINUE:
 	inc ESI
 	cmp ECX, 0
@@ -586,8 +529,6 @@ COPY_LOOP:
 RETURN:
 	ret
 encryptBuffer ENDP
-
-
 ; --------------------------------------------------------------
 ; sortIDs PROC
 ;
@@ -619,13 +560,10 @@ sortIDs PROC USES EAX ECX ESI EDI
 		pop ecx
 	LOOP outerLoop
 	terminate:
-
 	mov esi , offset IDs
 	
 	ret 
 sortIDs ENDP
-
-
 ; --------------------------------------------------------------
 ; printStudent PROC
 ;
@@ -640,30 +578,25 @@ movzx EBX, printStudentID
 call getLastIndex
 mov EDI, OFFSET buffer
 mov AL, FIELD_DELIMETER
-
 ID_SEARCH:
 	cmp EDI, ESI		;check end of buffer
 	je ERROR
 	cmp [EDI], BL  ;compare buffer byte with id
 	je IDFOUND
-
 	add EDI,2
 	skipName:
 		cmp [EDI], AL	;check end of name
 		je CONTINUE
 		inc EDI
 	jmp skipName
-
 	CONTINUE:	
 		add EDI, 6
 jmp ID_SEARCH
-
 ;ERROR OCCURED
 ERROR:
 mov EDX,OFFSET errorString
 call writeString
 ret
-
 IDFOUND:
 	mov EDX, studentData
 	mov AL,  [EDI]
@@ -673,7 +606,6 @@ IDFOUND:
 	mov AL," "
 	mov [EDX], AL
 	inc EDX
-
 	inc EDI
 	inc EDI
 	mov BL, FIELD_DELIMETER
@@ -690,16 +622,13 @@ IDFOUND:
 		mov AL," "
 		mov [EDX], AL
 		inc EDX
-
 		inc EDI
 		mov AL, [EDI]
 		mov [EDX], AL  ;mov Grade
 		inc EDX
-
 		mov AL," "
 		mov [EDX], AL	
 		inc EDX
-
 	inc EDI
 	inc EDI
 	mov AL, [EDI]	;mov Section Number
@@ -707,8 +636,6 @@ IDFOUND:
 	inc EDX
 	ret
 printStudent ENDP
-
-
 ; --------------------------------------------------------------
 ; generateSectionReport PROC
 ;
@@ -721,24 +648,19 @@ printStudent ENDP
 ; --------------------------------------------------------------
 generateSectionReport PROC USES EDX ECX EDI EBX ESI EAX reportSection: BYTE, reportFileName: PTR BYTE
 movzx EAX, reportSection
-
 mov EDX, OFFSET IDs
 mov ECX, lengthof IDs
 call clearArray
-
 mov EDX, OFFSET SectionStudents
 mov ECX, lengthof SectionStudents
 call clearArray
-
 ;get last offset in the buffer
 call getLastIndex
 mov EDI, OFFSET buffer
 mov EDX, OFFSET IDs
-
 ;get all section IDs
 getSectionIDs:
 	mov BL, [EDI]  ;store student's ID temp
-
 	;skip until record delimeter
 	;push ECX
 	push EBX
@@ -753,10 +675,8 @@ getSectionIDs:
 		jmp skipName
 		CNT:
 		 add EDI, 3	;skip grade
-
 END_OF_RECORD:
 		pop EBX
-
 		cmp [EDI], AL 
 		jne continue	;student is not from the required section
 		;ADD Student ID in IDs array
@@ -768,7 +688,6 @@ END_OF_RECORD:
 			cmp EDI,ESI  ; Check end of buffer
 			je SORT
 jmp getSectionIDs
-
 SORT:
 	mov esi, offset IDs
 	mov BL,0
@@ -776,39 +695,32 @@ SORT:
 	je NO_STUDENTS_FOUND  ; no students in the section
 	call sortIDs	
 	jmp getStudents
-
 	NO_STUDENTS_FOUND:	  ;display error msg, break the PROC
 		mov EDX, OFFSET NO_STUDENTS_ERROR
 		call writeString 
 		call crlf
 		ret
-
 ;get students by sorted IDs
 getStudents:
 	mov EDX, OFFSET IDs
 	mov ECX, LENGTHOF IDs
 	;TODO esi contains last offset in buffer
-
 	mov ESI, OFFSET SectionStudents
-
 	iterateIDs:
 	mov AL, FIELD_DELIMETER
 	mov BL, [EDX]
 	mov BL, 0
 	cmp [EDX], BL  ;check ids termination
 	je END_OF_IDs
-
 	mov BL, [EDX]  ;store ID 
 	;push ECX		;store outer loop counter
 	
 	;iterate over "buffer" until reach ID record
 	mov EDI, OFFSET buffer
-
 		studentSearch:
 		;TODO check end of buffer
 		cmp [EDI], BL  ;check if student's id == id
 		je STUDENT_FOUND
-
 		SKIP_RECORD:
 			add EDI, 2  ;SKIP ID
 			skip:
@@ -818,11 +730,9 @@ getStudents:
 			jmp skip
 	END_OF_NAME:
 		add EDI, 6
-
 		CONTINUE_SEARCH:
 			;inc EDI		;skip record Delimter
 		loop studentSearch
-
 	STUDENT_FOUND:
 		;mov ID to convert it into string
 		movzx EAX, byte ptr[EDI]
@@ -847,7 +757,6 @@ getStudents:
 		mov [ESI],AL
 		mov AL, FIELD_DELIMETER
 		inc ESI
-
 		;copy student name into sectionStudents array
 		mov ECX, lengthof buffer	
 		copyName:
@@ -858,14 +767,12 @@ getStudents:
 			inc ESI
 			inc EDI
 		loop copyName
-
 	COPY:
 		;ADD Delimeter
 		mov AL, ' '
 		mov [ESI], AL	
 		inc ESI
 		inc EDI
-
 		;copy numeric grade
 		push ECX
 		push ESI
@@ -885,7 +792,6 @@ getStudents:
 		mov AL,' '
 		mov [ESI], AL
 		inc ESI
-
 		;get alphabetic grade
 		movzx EAX, byte ptr[EDI]
 		call GetAlphabeticalGrade
@@ -901,7 +807,6 @@ getStudents:
 		mov AL, 10
 		mov [ESI],AL
 		inc ESI	
-
 		pop ECX
 		inc EDX
 		dec ECX
@@ -909,12 +814,9 @@ getStudents:
 		cmp EBX, ECX	;check end of IDs array
 		add EDI,5
 	jne iterateIDs
-
 END_OF_IDs:
-
 GET_FILE_NAME:
 	mov EDX, reportFileName
-
 	CreateNewFile:
 	call CreateOutputFile
 	; Checking for File Handle Errors
@@ -924,7 +826,6 @@ GET_FILE_NAME:
 	call writeString
 	call CRLF
 	ret					; Error Found
-
 copytofile:
 	mov EDX, OFFSET SectionStudents
 	mov ECX, LENGTHOF SectionStudents
@@ -934,7 +835,6 @@ copytofile:
 	pop EAX		  ; Retrieving File Handle
 	call closeFile
 	mov EAX, EBX  ; Retrieving EAX Value (Number of Bytes Written in File)
-
 	; Checking Write Errors
 	cmp EAX, LENGTHOF SectionStudents
 	je DONE_SAVING  ; EAX == LENGTHOF buffer (NO ERROR)
@@ -943,25 +843,19 @@ copytofile:
 	call writeString
 	call CRLF
 	ret
-
 DONE_SAVING:
 	mov EDX, OFFSET successString
 	call writeString
 	call CRLF
-
 CLEAR_ARRAYS:
 mov EDX, OFFSET IDs
 mov ECX, lengthof IDs
 call clearArray
-
 mov EDX, OFFSET SectionStudents
 mov ECX, lengthof SectionStudents
 call clearArray
-
 ret
 generateSectionReport ENDP
-
-
 ; --------------------------------------------------------------
 ; clearArray
 ;
@@ -978,8 +872,6 @@ inc EDX
 loop clear
 ret
 clearArray ENDP
-
-
 ; --------------------------------------------------------------
 ; parseNumberString PROC
 ;
@@ -1027,7 +919,6 @@ parseNumberString PROC USES ESI EAX EBX EDI EDX
 	mov ECX, EBX  ; Returning the Length of the String in ECX
 	ret
 parseNumberString ENDP
-
 ; --------------------------------------------------------------
 ; sortGrades PROC
 ;
@@ -1059,11 +950,8 @@ sortGrades PROC USES EAX ECX EDI ESI
 		pop ECX
 	LOOP outerLoop
 	terminate:
-
 	ret 
 sortGrades ENDP
-
-
 ; --------------------------------------------------------------
 ; top5Students PROC
 ;
@@ -1076,12 +964,10 @@ top5Students PROC USES EAX EBX ECX EDX ESI EDI studentsData: PTR BYTE
 	mov EDX, offset CopiedBuffer
 	mov ECX, lengthof CopiedBuffer
 	call clearArray
-
 	mov EDI, offset buffer
 	mov EDX, offset CopiedBuffer
 	mov ECX, lengthof CopiedBuffer
 	call getLastIndex
-
 	copyBuffer:
 		cmp ESI, EDI
 		je stop
@@ -1096,11 +982,9 @@ top5Students PROC USES EAX EBX ECX EDX ESI EDI studentsData: PTR BYTE
 	mov ECX, lengthof Grades
 	call clearArray
 	call getLastIndex
-
 	mov EDI, offset buffer
 	mov EDX, offset Grades
 	mov ECX, lengthof Grades
-
 	getGrades:
 		push ECX
 		mov BL, FIELD_DELIMETER
@@ -1127,7 +1011,6 @@ top5Students PROC USES EAX EBX ECX EDX ESI EDI studentsData: PTR BYTE
 		je SORT
 		pop ECX
 	loop getGrades
-
 	SORT:
 	pop ECX
 	mov ESI, offset Grades
@@ -1136,32 +1019,26 @@ top5Students PROC USES EAX EBX ECX EDX ESI EDI studentsData: PTR BYTE
 	je NO_STUDENTS_FOUND
 	call sortGrades
 	jmp getStudents
-
 	NO_STUDENTS_FOUND:	  ;display error msg, break the PROC
 		mov EDX, OFFSET NO_STUDENTS_ERROR
 		call writeString 
 		call crlf
 		ret
-
 getStudents:	
 	;Display Students from Buffer with Grades
 	mov EDX, offset Grades
-
+	mov ESI, studentsData
 	iterateGrades:
-
 		mov BL, 0
 		cmp [EDX], BL  ;check for end of Grades
 		je END_OF_Grades
-
 		mov ECX, lengthof CopiedBuffer
 		mov EDI, offset CopiedBuffer
-
 		mov BL, [EDX]	; store student's grade
 			iterateAllRecords:
 				mov AL, [EDI]
 				push EAX
 				mov AL, Field_Delimeter
-
 				SKIP_RECORD:
 					add EDI, 2 ;Skip ID
 					skip:
@@ -1181,69 +1058,61 @@ getStudents:
 				mov EBX,EAX
 				mov EDI, OFFSET buffer
 				mov AL, FIELD_DELIMETER
-
 				ID_SEARCH:
 					cmp [EDI],BL  ;compare buffer byte with id
 					je IDFOUND
-
 					add EDI,2
 					skipN:
 						cmp [EDI], AL	;check end of name
 						je CONTINUE
 						inc EDI
 					jmp skipN
-
 					CONTINUE:	
 						add EDI, 6
 				jmp ID_SEARCH
-
 				IDFOUND:
 					movzx EAX, byte ptr [EDI]
-					call writeDec  ;display ID
-
-					mov AL," "
-					call writeChar
-
-					inc EDI
-					inc EDI
+					mov [ESI], EAX
+					inc ESI
+					mov AL,FIELD_DELIMETER
+					mov [ESI], AL
+					inc ESI
+					add EDI, 2
 					mov BL, FIELD_DELIMETER
 					mov ecx, BUFFER_SIZE
 					DisplayName:
 						cmp [EDI], BL
 						je END_OFNAME
 						mov AL, [EDI]
-						call writeChar
+						mov [ESI], AL
+						inc ESI
 						inc EDI
 					loop DisplayName
 					END_OFNAME:
-						mov AL," "
-						call writeChar
-
+						mov AL,FIELD_DELIMETER
+						mov [ESI], AL
+						inc ESI
 						inc EDI
 						movzx EAX,byte ptr [EDI]
-						call writeDec ;display grade
-
-						mov AL," "
-						call writeChar
-
-					inc EDI
-					inc EDI
+						mov [ESI], EAX ;display grade
+						mov AL,FIELD_DELIMETER
+						mov [ESI], AL
+						inc ESI
+					add EDI, 2
 					movzx EAX, byte ptr[EDI]
-					call writeDec ;display sec id
-					call crlf						
+					mov [ESI], EAX
+					inc ESI
+					mov AL, FIELD_DELIMETER
+					mov [ESI], AL
+					inc ESI
 					
 					INC EDX
 	 jmp iterateGrades
-
 	END_OF_Grades:
-
 	ret
 top5Students ENDP
-
-
 ; DllMain is required for any DLL
 DllMain PROC hInstance:DWORD, fdwReason:DWORD, lpReserved:DWORD 
-
 mov eax, 1		; Return true to caller. 
 ret 				
 DllMain ENDP
