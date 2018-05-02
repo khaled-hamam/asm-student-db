@@ -40,6 +40,8 @@ SECTIONID BYTE ?
 
 .code
 ; --------------------------------------------------------------
+; openDatabase PROC
+;
 ; Opens: the DB File, Validate the DB key, Decrypt the data, 
 ;	Reads the file into the "buffer" array.
 ; Receives:	openFileName = Contains the OFFSET to the File Name String
