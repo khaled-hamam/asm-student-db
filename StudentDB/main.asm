@@ -339,30 +339,24 @@ enrollStudent ENDP
 ;---------------------
 ; printStudents PROC
 ;---------------------
-printStudents PROC USES EDI ESI ECX EAX EDX studentsBuffer: PTR BYTE
-	mov EDX,  studentsBuffer
+printStudentsBuffer PROC USES EDI ESI ECX EAX EDX EBX studentsBuffer: PTR BYTE
 	call getLastIndex
+	mov EDX, studentsBuffer
 	mov EDI, ESI
 	mov ESI, OFFSET buffer
-	cmp ESI,EDI
-	je RETURN
-
+	mov BL, FIELD_DELIMETER
+ 
 BUFFER_LOOP:
 		cmp ESI, EDI  ;END OF BUFFER
 		je RETURN
-		mov EAX, 0
 		mov Al, [ESI]  ;mov ID
 		mov [EDX], AL	
 		inc EDX
-		inc ESI	
-
-		mov Al, [ESI]
-		mov [EDX], AL	; mov Delimeter
+		add ESI, 2
+ 
+		mov [EDX], BL	; mov Delimeter
 		inc EDX
-		inc ESI			
-
-		mov BL, FIELD_DELIMETER
-		
+ 
 SKIP_NAME:
 		cmp [ESI], BL	;CHECK END OF NAME
 		je CONTINUE
@@ -371,33 +365,36 @@ SKIP_NAME:
 		inc EDX
 		inc ESI
 	jmp SKIP_NAME
+ 
 CONTINUE:
-	mov AL,[ESI]	;mov Delimeter
-	mov [EDX], AL
-	inc EDX
 	inc ESI
-
+ 
+	;mov Delimeter
+	mov [EDX], BL
+	inc EDX
+ 
 	mov AL, [ESI]	;mov Grade
 	mov [EDX], AL
 	inc EDX
-	inc ESI	
-
-	mov AL,[ESI]	;mov Delimeter
-	mov [EDX], AL
+	add ESI, 2	
+ 
+	;mov Delimeter
+	mov [EDX], BL
 	inc EDX
-	inc ESI
-
+ 
 	mov Al, [ESI]	;mov Section Number
 	mov [EDX], AL
 	inc EDX
-	inc ESI
-	
+	add ESI, 3
+ 
 	mov [EDX], BL	;mov Field Delimeter
-	add ESI, 2
+	inc EDX
+	
 	jmp BUFFER_LOOP
+ 
 RETURN:
 	ret
-printStudents ENDP
+printStudentsBuffer ENDP
 
 
 ; --------------------------------------------------------------

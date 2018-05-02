@@ -7,3 +7,4 @@ saveDatabase @5
 printStudent @6
 generateSectionReport @7
 top5Students @8
+printStudentsBuffer @9
