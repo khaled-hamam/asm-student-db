@@ -41,8 +41,9 @@
                          materialDesign:TextFieldAssist.DecorationVisibility="Hidden" 
                          BorderThickness="0"
                          MinWidth="250" VerticalAlignment="Center"
-                         Foreground="Black"/>
-                        <Button Style="{DynamicResource MaterialDesignToolButton}" Grid.Column="1">
+                         Foreground="Black"
+                         Name="searchQuery"/>
+                        <Button Style="{DynamicResource MaterialDesignToolButton}" Grid.Column="1" Click="Search">
                             <materialDesign:PackIcon Kind="Magnify" Opacity=".56" />
                         </Button>
                     </StackPanel>
@@ -306,6 +307,22 @@
                 <!--#endregion-->
 
                 <ListView Name="StudentsListView" Grid.Row="1" Grid.RowSpan="7" Grid.ColumnSpan="2">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn
+                                DisplayMemberBinding="{Binding ID}"
+                                Header="ID" />
+                            <GridViewColumn
+                                DisplayMemberBinding="{Binding Name}"
+                                Header="Name" />
+                            <GridViewColumn
+                                DisplayMemberBinding="{Binding NumericGrade}"
+                                Header="Numeric Grade" />
+                            <GridViewColumn
+                                Header="Section"
+                                Width="200"/>
+                        </GridView>
+                    </ListView.View>
                 </ListView>
             </Grid>
         </materialDesign:DialogHost>

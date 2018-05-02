@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 
 namespace StudentDB_GUI
 {
@@ -10,11 +12,11 @@ namespace StudentDB_GUI
     /// </summary>
     public partial class MainWindow : Window
     {
-        public ObservableCollection<string> StudentList;
+        public ObservableCollection<Student> StudentList;
 
         public MainWindow()
         {
-            StudentList = new ObservableCollection<string>();
+            StudentList = new ObservableCollection<Student>();
             InitializeComponent();
             StudentsListView.ItemsSource = StudentList;
             RefreshList();
@@ -22,6 +24,9 @@ namespace StudentDB_GUI
 
         public void RefreshList()
         {
+            ((GridView)StudentsListView.View).Columns[3].Header = "Section";
+            ((GridView)StudentsListView.View).Columns[3].DisplayMemberBinding = new Binding("Section");
+
             StudentList.Clear();
             char[] studentRecords = new char[1024];
 
@@ -38,13 +43,35 @@ namespace StudentDB_GUI
                 int section = splitRecords[i + 3][0];
 
                 Student student = new Student { ID = id, Name = name, NumericGrade = grade, Section = section };
-                StudentList.Add($"ID: {student.ID}\tName: {student.Name}\tNumeric Grade: {student.NumericGrade}\tSection: {student.Section}");
+                StudentList.Add(student);
             }
         }
 
         public void Search(object sender, RoutedEventArgs e)
         {
+            if (string.IsNullOrEmpty(searchQuery.Text))
+            {
+                RefreshList();
+                return;
+            }
 
+            int searchID = int.Parse(searchQuery.Text);
+            char[] studentRecord = new char[100];
+
+            AssemblyStudentDB.printStudent((char)searchID, studentRecord);
+            string recordString = new string(studentRecord);
+
+            string[] fields = recordString.Split(' ');
+            if (fields.Length != 4)
+                return;
+
+            StudentList.Clear();
+
+            ((GridView)StudentsListView.View).Columns[3].Header = "Alphabetic Grade";
+            ((GridView)StudentsListView.View).Columns[3].DisplayMemberBinding = new Binding("AlphabeticGrade");
+
+            Student student = new Student { ID = int.Parse(fields[0]), Name = fields[1], NumericGrade = int.Parse(fields[2]), AlphabeticGrade = fields[3][0] };
+            StudentList.Add(student);
         }
 
         public void Enroll(object sender, RoutedEventArgs e)
@@ -106,6 +133,9 @@ namespace StudentDB_GUI
             string records = new string(studentRecords);
             string[] splitRecords = records.Split('/');
 
+
+            ((GridView)StudentsListView.View).Columns[3].Header = "Section";
+            ((GridView)StudentsListView.View).Columns[3].DisplayMemberBinding = new Binding("Section");
             StudentList.Clear();
             for (int i = 0; i < splitRecords.Length - 1; i += 4)
             {
@@ -115,7 +145,7 @@ namespace StudentDB_GUI
                 int section = splitRecords[i + 3][0];
 
                 Student student = new Student { ID = id, Name = name, NumericGrade = grade, Section = section };
-                StudentList.Add($"ID: {student.ID}\tName: {student.Name}\tNumeric Grade: {student.NumericGrade}\tSection: {student.Section}");
+                StudentList.Add(student);
             }
         }
     }
