@@ -1,8 +1,11 @@
 include irvine32.inc
+
 ; CONSTANTS
 BUFFER_SIZE = 1024
 FIELD_DELIMETER = '/'
 RECORD_DELIMETER = '@'
+
+
 .data
 IDs BYTE 21 DUP(?), 0
 SectionStudents BYTE BUFFER_SIZE DUP(?) , 0
@@ -33,6 +36,8 @@ ID BYTE ?
 GRADE BYTE ?
 STUDENTNAME BYTE 100 DUP(?)
 SECTIONID BYTE ?
+
+
 .code
 ; --------------------------------------------------------------
 ; Opens: the DB File, Validate the DB key, Decrypt the data, 
@@ -112,6 +117,8 @@ ERROR_FOUND:
 	call CRLF
 	ret
 openDatabase ENDP
+
+
 ;---------------------------------------------------------------
 ; updateGrade PROC
 ;
@@ -175,6 +182,8 @@ END_OF_NAME:
 END_OF_FILE:  ;Break the Loop
 	ret
 updateGrade ENDP
+
+
 ;---------------------------------------------------------------
 ; deleteStudent PROC
 ;
@@ -216,6 +225,8 @@ IDFOUND:
 DONE:
 	ret
 deleteStudent ENDP
+
+
 ; --------------------------------------------------------------
 ; EnrollStudent PROC
 ;
@@ -321,6 +332,8 @@ SEC_2:
 	call writestring
 	ret
 enrollStudent ENDP
+
+
 ;---------------------
 ; printStudents PROC
 ;---------------------
@@ -365,6 +378,8 @@ CONTINUE:
 RETURN:
 	ret
 printStudents ENDP
+
+
 ; --------------------------------------------------------------
 ; getAlphabeticalGrade PROC
 ;
@@ -402,6 +417,8 @@ getAlphabeticalGrade PROC USES ECX EDX
 	done:
 	ret
 getAlphabeticalGrade ENDP 
+
+
 ; --------------------------------------------------------------
 ; getLastIndex PROC
 ;
@@ -433,6 +450,8 @@ RETURN:
 	mov ESI, EDI
 	ret
 getLastIndex ENDP
+
+
 ; --------------------------------------------------------------
 ; saveDatabase PROC
 ;
@@ -486,6 +505,8 @@ DONE_SAVING:
 	call CRLF
 	ret
 saveDatabase ENDP
+
+
 ; --------------------------------------------------------------
 ; encryptBuffer PROC
 ;
@@ -529,6 +550,8 @@ COPY_LOOP:
 RETURN:
 	ret
 encryptBuffer ENDP
+
+
 ; --------------------------------------------------------------
 ; sortIDs PROC
 ;
@@ -564,6 +587,8 @@ sortIDs PROC USES EAX ECX ESI EDI
 	
 	ret 
 sortIDs ENDP
+
+
 ; --------------------------------------------------------------
 ; printStudent PROC
 ;
@@ -636,6 +661,8 @@ IDFOUND:
 	inc EDX
 	ret
 printStudent ENDP
+
+
 ; --------------------------------------------------------------
 ; generateSectionReport PROC
 ;
@@ -856,6 +883,8 @@ mov ECX, lengthof SectionStudents
 call clearArray
 ret
 generateSectionReport ENDP
+
+
 ; --------------------------------------------------------------
 ; clearArray
 ;
@@ -872,6 +901,8 @@ inc EDX
 loop clear
 ret
 clearArray ENDP
+
+
 ; --------------------------------------------------------------
 ; parseNumberString PROC
 ;
@@ -919,6 +950,8 @@ parseNumberString PROC USES ESI EAX EBX EDI EDX
 	mov ECX, EBX  ; Returning the Length of the String in ECX
 	ret
 parseNumberString ENDP
+
+
 ; --------------------------------------------------------------
 ; sortGrades PROC
 ;
@@ -952,6 +985,8 @@ sortGrades PROC USES EAX ECX EDI ESI
 	terminate:
 	ret 
 sortGrades ENDP
+
+
 ; --------------------------------------------------------------
 ; top5Students PROC
 ;
@@ -1111,9 +1146,12 @@ getStudents:
 	END_OF_Grades:
 	ret
 top5Students ENDP
+
+
 ; DllMain is required for any DLL
 DllMain PROC hInstance:DWORD, fdwReason:DWORD, lpReserved:DWORD 
 mov eax, 1		; Return true to caller. 
 ret 				
 DllMain ENDP
+
 END DllMain  ; For Exporting a DLL
