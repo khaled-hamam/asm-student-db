@@ -306,7 +306,6 @@
                 <!--#endregion-->
 
                 <ListView Name="StudentsListView" Grid.Row="1" Grid.RowSpan="7" Grid.ColumnSpan="2">
-                    
                 </ListView>
             </Grid>
         </materialDesign:DialogHost>
