@@ -666,10 +666,17 @@ ret
 
 IDFOUND:
 	mov EDX, studentData
-	mov AL,  [EDI]
-	mov [EDX], AL		;mov ID
-	inc EDX
-	
+	movzx EAX, byte ptr[EDI]
+	mov ESI, OFFSET convertedNum
+	call parseNumberString
+
+	copyID:
+			mov AL, [ESI]
+			mov [EDX], AL
+			inc ESI
+			inc EDX
+	loop copyID
+
 	mov AL," "
 	mov [EDX], AL
 	inc EDX
@@ -686,15 +693,22 @@ IDFOUND:
 		inc EDX
 		inc EDI
 	loop DisplayName
+
 	END_OF_NAME:
 		mov AL," "
 		mov [EDX], AL
 		inc EDX
 
-		inc EDI
-		mov AL, [EDI]
-		mov [EDX], AL  ;mov Grade
-		inc EDX
+	movzx EAX, byte ptr [EDI]
+	mov ESI, OFFSET convertedNum
+	call parseNumberString
+
+	copyGrade:
+			mov AL, [ESI]
+			mov [EDX], AL
+			inc ESI
+			inc EDX
+	loop copyGrade
 
 		mov AL," "
 		mov [EDX], AL	
@@ -702,9 +716,19 @@ IDFOUND:
 
 	inc EDI
 	inc EDI
-	mov AL, [EDI]	;mov Section Number
-	mov [EDX], AL	
-	inc EDX
+
+	movzx EAX, byte ptr [EDI]
+	mov ESI, OFFSET convertedNum
+	call parseNumberString
+
+	copySecNum:
+			mov AL, [ESI]
+			mov [EDX], AL
+			inc ESI
+			inc EDX
+	loop copySecNum
+
+
 	ret
 printStudent ENDP
 
