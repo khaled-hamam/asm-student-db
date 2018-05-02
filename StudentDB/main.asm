@@ -100,9 +100,9 @@ DECRYPT:
 		mov BL, [EDX]
 		inc EDX
 	LOOP DECRYPT
-	mov EDX, OFFSET buffer
-	call writeString
-	call crlf
+	;mov EDX, OFFSET buffer
+	;call writeString
+	;call crlf
 	mov EAX, fileHandle
 	call CloseFile
 	; mov EDX, OFFSET buffer
@@ -115,8 +115,8 @@ ERROR_FOUND:
 	call closeFile
 	; TODO: Reset the buffer array
 	mov EDX, OFFSET errorString 
-	call writeString
-	call CRLF
+	;call writeString
+	;call CRLF
 	ret
 openDatabase ENDP
 
@@ -152,8 +152,8 @@ jmp SEARCH_ID
 ERROR_FOUND:
 	; ERROR ID IS NOT FOUND
 	mov EDX, OFFSET errorString 
-	call writeString
-	call crlf
+	;call writeString
+	;call crlf
 	pop EAX
 	jmp END_OF_FILE
 ID_FOUND:
@@ -173,8 +173,8 @@ NAME_LOOP:
 	loop NAME_LOOP
 	; ERROR FOUND
 	mov EDX, OFFSET errorString 
-	call writeString
-	call crlf
+	;call writeString
+	;call crlf
 	jmp END_OF_FILE
 END_OF_NAME:
 	inc EDX
@@ -217,10 +217,10 @@ delete:
 	jmp delete
 ;ERROR OCCURED
 ERROR:
-mov EDX,OFFSET errorString
-call writeString
-jmp DONE
-;MOVE IN ID *
+	mov EDX,OFFSET errorString
+	;call writeString
+	jmp DONE
+	;MOVE IN ID *
 IDFOUND:
 	mov AL,'*'
 	mov [EDI], AL
@@ -331,7 +331,7 @@ SEC_2:
 	err:
 	DONE:
 	mov EDX, offset buffer 
-	call writestring
+	;call writestring
 	ret
 enrollStudent ENDP
 
@@ -339,44 +339,62 @@ enrollStudent ENDP
 ;---------------------
 ; printStudents PROC
 ;---------------------
-printStudents PROC
+printStudents PROC USES EDI ESI ECX EAX EDX studentsBuffer: PTR BYTE
+	mov EDX,  studentsBuffer
 	call getLastIndex
 	mov EDI, ESI
 	mov ESI, OFFSET buffer
 	cmp ESI,EDI
 	je RETURN
-	mov ECX, LENGTHOF buffer
+
 BUFFER_LOOP:
-		cmp ESI, EDI
+		cmp ESI, EDI  ;END OF BUFFER
 		je RETURN
 		mov EAX, 0
+		mov Al, [ESI]  ;mov ID
+		mov [EDX], AL	
+		inc EDX
+		inc ESI	
+
 		mov Al, [ESI]
-		call writeDec
-		add ESI, 2
+		mov [EDX], AL	; mov Delimeter
+		inc EDX
+		inc ESI			
+
 		mov BL, FIELD_DELIMETER
-		mov Al,' '
-		call writechar
+		
 SKIP_NAME:
-		cmp [ESI], BL
+		cmp [ESI], BL	;CHECK END OF NAME
 		je CONTINUE
 		mov AL,[ESI]
-		call writechar
+		mov [EDX], AL
+		inc EDX
 		inc ESI
 	jmp SKIP_NAME
 CONTINUE:
-	add ESI, 1
-	mov Al,' '
-	call writechar
-	mov Al, [ESI]
-	call writeDec
+	mov AL,[ESI]	;mov Delimeter
+	mov [EDX], AL
+	inc EDX
+	inc ESI
+
+	mov AL, [ESI]	;mov Grade
+	mov [EDX], AL
+	inc EDX
+	inc ESI	
+
+	mov AL,[ESI]	;mov Delimeter
+	mov [EDX], AL
+	inc EDX
+	inc ESI
+
+	mov Al, [ESI]	;mov Section Number
+	mov [EDX], AL
+	inc EDX
+	inc ESI
+	
+	mov [EDX], BL	;mov Field Delimeter
 	add ESI, 2
-	mov Al,' '
-	call writechar
-	mov Al, [ESI]
-	call writeDec
-	call CRLF
-	add ESI, 3
-	loop BUFFER_LOOP
+	jmp BUFFER_LOOP
 RETURN:
 	ret
 printStudents ENDP
@@ -471,8 +489,8 @@ saveDatabase PROC USES EAX EBX ECX EDX ESI EDI saveFileName: PTR BYTE, saveDBKey
 	cmp EAX, INVALID_HANDLE_VALUE
 	jne ENCRYPT_STRING  ; No Error Found
 	mov EDX, OFFSET errorString
-	call writeString
-	call CRLF
+	;call writeString
+	;call CRLF
 	ret					; Error Found
 ENCRYPT_STRING:
 	push EAX  ; Saving File Handle Value
@@ -498,13 +516,13 @@ ENCRYPT_STRING:
 	je DONE_SAVING  ; EAX == LENGTHOF buffer (NO ERROR)
 	; EAX != LENGTHOF buffer (ERROR)
 	mov EDX, OFFSET errorString
-	call writeString
-	call CRLF
+	;call writeString
+	;call CRLF
 	ret
 DONE_SAVING:
 	mov EDX, OFFSET successString
-	call writeString
-	call CRLF
+	;call writeString
+	;call CRLF
 	ret
 saveDatabase ENDP
 
@@ -626,7 +644,7 @@ jmp ID_SEARCH
 ;ERROR OCCURED
 ERROR:
 mov EDX,OFFSET errorString
-call writeString
+;call writeString
 ret
 
 IDFOUND:
@@ -760,8 +778,8 @@ SORT:
 	jmp getStudents
 	NO_STUDENTS_FOUND:	  ;display error msg, break the PROC
 		mov EDX, OFFSET NO_STUDENTS_ERROR
-		call writeString 
-		call crlf
+		;call writeString 
+		;call crlf
 		ret
 ;get students by sorted IDs
 getStudents:
@@ -886,8 +904,8 @@ GET_FILE_NAME:
 	cmp EAX, INVALID_HANDLE_VALUE
 	jne copytofile  ; No Error Found
 	mov EDX, OFFSET errorString
-	call writeString
-	call CRLF
+	;call writeString
+	;call CRLF
 	ret					; Error Found
 copytofile:
 	mov EDX, OFFSET SectionStudents
@@ -903,13 +921,13 @@ copytofile:
 	je DONE_SAVING  ; EAX == LENGTHOF buffer (NO ERROR)
 	; EAX != LENGTHOF buffer (ERROR)
 	mov EDX, OFFSET errorString
-	call writeString
-	call CRLF
+	;call writeString
+	;call CRLF
 	ret
 DONE_SAVING:
 	mov EDX, OFFSET successString
-	call writeString
-	call CRLF
+	;call writeString
+	;call CRLF
 CLEAR_ARRAYS:
 mov EDX, OFFSET IDs
 mov ECX, lengthof IDs
@@ -1092,8 +1110,8 @@ top5Students PROC USES EAX EBX ECX EDX ESI EDI studentsData: PTR BYTE
 	jmp getStudents
 	NO_STUDENTS_FOUND:	  ;display error msg, break the PROC
 		mov EDX, OFFSET NO_STUDENTS_ERROR
-		call writeString 
-		call crlf
+		;call writeString 
+		;call crlf
 		ret
 getStudents:	
 	;Display Students from Buffer with Grades
