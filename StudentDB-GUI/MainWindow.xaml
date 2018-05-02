@@ -7,11 +7,11 @@
         xmlns:local="clr-namespace:StudentDB_GUI"
         xmlns:system="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525" MaxHeight="350" MaxWidth="525">
+        Title="MainWindow" Height="350" Width="525">
     <Grid Background="#ecf0f1">
         <materialDesign:DialogHost  Name="EnrollStudent"  Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <materialDesign:DialogHost.DialogContent>
-                <StackPanel >
+                <StackPanel>
                     <StackPanel Margin="16">
                         <TextBox  materialDesign:HintAssist.Hint="Student ID"  Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 8 0 0" HorizontalAlignment="Left" Width="200" x:Name="StudentIDTextBox" />
                         <TextBox  materialDesign:HintAssist.Hint="Student Name"  Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0 8 0 0" HorizontalAlignment="Left" Width="200" x:Name="StudentNameTextBox" />
@@ -61,18 +61,18 @@
             <RowDefinition Height="50"/>
             <RowDefinition Height="50"/>
         </Grid.RowDefinitions>
-        <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.ColumnSpan="2" Background="White">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="125 10 0 0">
-            <TextBox Grid.Column="0" 
-                         materialDesign:HintAssist.Hint="Search For Student" 
-                         materialDesign:HintAssist.HintOpacity="0.4"
-                         materialDesign:TextFieldAssist.DecorationVisibility="Hidden" 
-                         BorderThickness="0"
-                         MinWidth="250" VerticalAlignment="Center"
-                         Foreground="Black"/>
-            <Button Style="{DynamicResource MaterialDesignToolButton}" Grid.Column="1">
-                <materialDesign:PackIcon Kind="Magnify" Opacity=".56" />
-            </Button>
+        <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Background="White" HorizontalAlignment="Stretch">
+            <StackPanel Orientation="Horizontal" Margin="0 10 0 0" HorizontalAlignment="Center">
+                <TextBox Grid.Column="0" 
+                             materialDesign:HintAssist.Hint="Search For Student" 
+                             materialDesign:HintAssist.HintOpacity="0.4"
+                             materialDesign:TextFieldAssist.DecorationVisibility="Hidden" 
+                             BorderThickness="0"
+                             MinWidth="250" VerticalAlignment="Center"
+                             Foreground="Black"/>
+                <Button Style="{DynamicResource MaterialDesignToolButton}" Grid.Column="1">
+                    <materialDesign:PackIcon Kind="Magnify" Opacity=".56" />
+                </Button>
             </StackPanel>
         </StackPanel>
         <StackPanel Grid.Row="1">
