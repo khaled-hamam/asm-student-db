@@ -336,9 +336,14 @@ SEC_2:
 enrollStudent ENDP
 
 
-;---------------------
-; printStudents PROC
-;---------------------
+; --------------------------------------------------------------
+; printStudentsBuffer PROC
+;
+; Searches: for all the students data and putting them in the
+;			recieved array
+; Receives:	studentsBuffer = Students Buffer String OFFSER
+; Returns: studentsBuffer = Student Records Data
+; --------------------------------------------------------------
 printStudentsBuffer PROC USES EDI ESI ECX EAX EDX EBX studentsBuffer: PTR BYTE
 	call getLastIndex
 	mov EDX, studentsBuffer
