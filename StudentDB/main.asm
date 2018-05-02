@@ -1130,7 +1130,8 @@ getStudents:
 						inc EDI
 						movzx EAX,byte ptr [EDI]
 						mov [ESI], EAX ;display grade
-						mov AL,FIELD_DELIMETER
+						inc ESI
+						mov AL, FIELD_DELIMETER
 						mov [ESI], AL
 						inc ESI
 					add EDI, 2
