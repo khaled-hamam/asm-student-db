@@ -319,8 +319,12 @@
                                 DisplayMemberBinding="{Binding NumericGrade}"
                                 Header="Numeric Grade" />
                             <GridViewColumn
-                                Header="Section"
-                                Width="200"/>
+                                DisplayMemberBinding="{Binding AlphabeticGrade}"
+                                Header="Alphabetic Grade"
+                                Width="Auto"/>
+                            <GridViewColumn
+                                DisplayMemberBinding="{Binding Section}"
+                                Header="Section" />
                         </GridView>
                     </ListView.View>
                 </ListView>

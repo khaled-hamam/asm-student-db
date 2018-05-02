@@ -24,9 +24,6 @@ namespace StudentDB_GUI
 
         public void RefreshList()
         {
-            ((GridView)StudentsListView.View).Columns[3].Header = "Section";
-            ((GridView)StudentsListView.View).Columns[3].DisplayMemberBinding = new Binding("Section");
-
             StudentList.Clear();
             char[] studentRecords = new char[1024];
 
@@ -66,9 +63,6 @@ namespace StudentDB_GUI
                 return;
 
             StudentList.Clear();
-
-            ((GridView)StudentsListView.View).Columns[3].Header = "Alphabetic Grade";
-            ((GridView)StudentsListView.View).Columns[3].DisplayMemberBinding = new Binding("AlphabeticGrade");
 
             Student student = new Student { ID = int.Parse(fields[0]), Name = fields[1], NumericGrade = int.Parse(fields[2]), AlphabeticGrade = fields[3][0] };
             StudentList.Add(student);
@@ -133,9 +127,6 @@ namespace StudentDB_GUI
             string records = new string(studentRecords);
             string[] splitRecords = records.Split('/');
 
-
-            ((GridView)StudentsListView.View).Columns[3].Header = "Section";
-            ((GridView)StudentsListView.View).Columns[3].DisplayMemberBinding = new Binding("Section");
             StudentList.Clear();
             for (int i = 0; i < splitRecords.Length - 1; i += 4)
             {
