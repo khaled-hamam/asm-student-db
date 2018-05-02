@@ -60,6 +60,14 @@ openDatabase PROC USES EDX ECX EAX EBX openFileName: PTR BYTE, openDBKey: BYTE
 	
 FILE_OK:
 	; read the file into buffer
+	push EDX
+	push ECX
+	mov EDX, OFFSET CopiedBuffer  
+	mov ECX, LENGTHOF CopiedBuffer
+	call clearArray  ; Clearing the encryptedBuffer Array
+	pop ECX
+	pop EDX
+
 	mov EDX, OFFSET CopiedBuffer 
 	mov ECX, LENGTHOF CopiedBuffer
 	call ReadFromFile
@@ -548,6 +556,13 @@ saveDatabase ENDP
 ; Returns: VOID
 ; --------------------------------------------------------------
 encryptBuffer PROC USES ESI EDI	ECX	EAX EBX
+push EDX
+push ECX
+mov EDX, OFFSET encryptedBuffer  
+mov ECX, LENGTHOF encryptedBuffer
+call clearArray  ; Clearing the encryptedBuffer Array
+pop ECX
+pop EDX
 COPY_LOOP:
 	mov BL, '*'  ; Checking for a Deleted Record
 	cmp [ESI], BL
@@ -1094,6 +1109,8 @@ top5Students PROC USES EAX EBX ECX EDX ESI EDI studentsData: PTR BYTE
 	mov EDI, offset buffer
 	mov EDX, offset Grades
 	mov ECX, lengthof Grades
+	cmp EDI, ESI		;check if end of buffer
+	je SORT
 	getGrades:
 		push ECX
 		mov BL, FIELD_DELIMETER
