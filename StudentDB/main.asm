@@ -1135,9 +1135,12 @@ top5Students PROC USES EAX EBX ECX EDX ESI EDI studentsData: PTR BYTE
 		ret
 getStudents:	
 	;Display Students from Buffer with Grades
+	mov ECX, 5
+
 	mov EDX, offset Grades
 	mov ESI, studentsData
 	iterateGrades:
+		push ECX
 		mov BL, 0
 		cmp [EDX], BL  ;check for end of Grades
 		je END_OF_Grades
@@ -1229,8 +1232,12 @@ getStudents:
 					inc ESI
 					
 					INC EDX
-	 jmp iterateGrades
+	pop ECX
+	dec ECX
+	jne iterateGrades
+
 	END_OF_Grades:
+	pop ECX
 	ret
 top5Students ENDP
 
