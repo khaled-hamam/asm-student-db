@@ -32,14 +32,15 @@ namespace StudentDB_GUI
             string records = new string(studentRecords);
             string[] splitRecords = records.Split('/');
 
-            for (int i = 0; i < splitRecords.Length - 1; i += 4)
+            for (int i = 0; i < splitRecords.Length - 1; i += 5)
             {
                 int id = splitRecords[i][0];
                 string name = splitRecords[i + 1];
                 int grade = splitRecords[i + 2][0];
-                int section = splitRecords[i + 3][0];
+                char alphabetGrade = splitRecords[i + 3][0];
+                int section = splitRecords[i + 4][0];
 
-                Student student = new Student { ID = id, Name = name, NumericGrade = grade, Section = section };
+                Student student = new Student { ID = id, Name = name, NumericGrade = grade, AlphabeticGrade = alphabetGrade, Section = section };
                 StudentList.Add(student);
             }
         }
@@ -59,12 +60,12 @@ namespace StudentDB_GUI
             string recordString = new string(studentRecord);
 
             string[] fields = recordString.Split(' ');
-            if (fields.Length != 4)
+            if (fields.Length != 5)
                 return;
 
             StudentList.Clear();
 
-            Student student = new Student { ID = int.Parse(fields[0]), Name = fields[1], NumericGrade = int.Parse(fields[2]), AlphabeticGrade = fields[3][0] };
+            Student student = new Student { ID = int.Parse(fields[0]), Name = fields[1], NumericGrade = int.Parse(fields[2]), AlphabeticGrade = fields[3][0], Section = int.Parse(fields[4]) };
             StudentList.Add(student);
         }
 
@@ -128,14 +129,15 @@ namespace StudentDB_GUI
             string[] splitRecords = records.Split('/');
 
             StudentList.Clear();
-            for (int i = 0; i < splitRecords.Length - 1; i += 4)
+            for (int i = 0; i < splitRecords.Length - 1; i += 5)
             {
                 int id = splitRecords[i][0];
                 string name = splitRecords[i + 1];
                 int grade = splitRecords[i + 2][0];
-                int section = splitRecords[i + 3][0];
+                char alphabetGrade = splitRecords[i + 3][0];
+                int section = splitRecords[i + 4][0];
 
-                Student student = new Student { ID = id, Name = name, NumericGrade = grade, Section = section };
+                Student student = new Student { ID = id, Name = name, NumericGrade = grade, AlphabeticGrade = alphabetGrade, Section = section };
                 StudentList.Add(student);
             }
         }
