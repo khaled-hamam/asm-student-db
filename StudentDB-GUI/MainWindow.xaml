@@ -68,7 +68,7 @@
                                      Style="{StaticResource MaterialDesignFloatingHintComboBox}" 
                                      Margin="0 8 0 0" HorizontalAlignment="Left"  Width="200" 
                                      x:Name="StudentSectionComboBox" 
-                                     IsEditable="True" >
+                                     IsEditable="False" >
                                         <ComboBoxItem>1</ComboBoxItem>
                                         <ComboBoxItem>2</ComboBoxItem>
                                     </ComboBox>
@@ -272,7 +272,7 @@
                                      Style="{StaticResource MaterialDesignFloatingHintComboBox}" 
                                      Margin="0 8 0 0" HorizontalAlignment="Left"  Width="200" 
                                      x:Name="GenerateSectionComboBox" 
-                                     IsEditable="True" >
+                                     IsEditable="False" >
                                         <ComboBoxItem>1</ComboBoxItem>
                                         <ComboBoxItem>2</ComboBoxItem>
                                     </ComboBox>
